@@ -540,9 +540,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>🌐 Crusoe Cloud</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="flex: 1;"></div>
+                <div style="flex: 1; text-align: center;">
+                    <h1>🌐 Crusoe Cloud</h1>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <button onclick="refreshDashboard()" class="refresh-btn" title="Refresh data">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
             <div class="subtitle">Global GPU Infrastructure Dashboard</div>
             <div style="color: #cccccc; margin-top: 10px;">Real-time Datacenter Visualization & Analytics</div>
+            <div id="lastUpdated" style="color: #888; font-size: 0.9em; margin-top: 15px;">
+                Last updated: <span id="updateTime">January 2026</span>
+            </div>
         </header>
 
         <!-- Global Statistics -->

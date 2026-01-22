@@ -1,5 +1,34 @@
 let compareMode = false;
 
+// Refresh dashboard
+function refreshDashboard() {
+    const btn = event.target;
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.transition = 'transform 0.5s ease';
+
+    setTimeout(() => {
+        location.reload();
+    }, 500);
+}
+
+// Update timestamp
+function updateTimestamp() {
+    const now = new Date();
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    const timeString = now.toLocaleString('en-US', options);
+    const timeElement = document.getElementById('updateTime');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
 function showDatacenter(id) {
     // Hide comparison view
     document.getElementById('comparisonView').classList.remove('active');
@@ -71,7 +100,7 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Animate progress bars on load
+// Animate progress bars on load and update timestamp
 window.addEventListener('load', () => {
     document.querySelectorAll('.progress-fill').forEach(bar => {
         const width = bar.style.width;
@@ -80,4 +109,7 @@ window.addEventListener('load', () => {
             bar.style.width = width;
         }, 100);
     });
+
+    // Update timestamp on load
+    updateTimestamp();
 });
