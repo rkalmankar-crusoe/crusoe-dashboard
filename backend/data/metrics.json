@@ -1,0 +1,55 @@
+{
+  "last_updated": "2026-01-22T00:00:00Z",
+  "global_summary": {
+    "total_nodes": 2732,
+    "total_gpus": 19008,
+    "monthly_revenue": 61500000,
+    "available_nodes": 224
+  },
+  "vendors": {
+    "nvidia": {
+      "gpus": 18720,
+      "percentage": 98.5
+    },
+    "amd": {
+      "gpus": 288,
+      "percentage": 1.5
+    }
+  },
+  "regions": {
+    "dallas": {
+      "name": "Dallas, Texas",
+      "nodes": 316,
+      "gpus": 2528,
+      "monthly_revenue": 5420000,
+      "racks": 29,
+      "fabrics": 2
+    },
+    "virginia": {
+      "name": "US-EAST1-A - Virginia",
+      "nodes": 480,
+      "gpus": 3560,
+      "monthly_revenue": 8010000,
+      "racks": 44,
+      "floors": 7,
+      "fabrics": 5
+    },
+    "iceland": {
+      "name": "IS-WEST1 - Iceland",
+      "nodes": 1936,
+      "gpus": 12920,
+      "monthly_revenue": 48070000,
+      "racks": 177,
+      "fabrics": 5
+    }
+  },
+  "gpu_models": {
+    "H200": { "gpus": 6568, "percentage": 35 },
+    "H100": { "gpus": 5440, "percentage": 29 },
+    "B200": { "gpus": 3904, "percentage": 21 },
+    "L40S": { "gpus": 1472, "percentage": 8 },
+    "GB200": { "gpus": 856, "percentage": 4 },
+    "A100": { "gpus": 480, "percentage": 3 },
+    "MI300X": { "gpus": 288, "percentage": 2 }
+  }
+}
