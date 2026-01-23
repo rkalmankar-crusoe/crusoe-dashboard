@@ -318,7 +318,31 @@ def get_auth_info():
             issued_at = token_data.get('iat', 0)
             issued_datetime = datetime.fromtimestamp(issued_at) if issued_at > 0 else None
 
-            # Calculate token age
+            # Check for token expiration
+            expires_at = token_data.get('exp')
+            expires_datetime = None
+            expires_display = "No expiration"
+            expires_in_seconds = None
+
+            if expires_at:
+                expires_datetime = datetime.fromtimestamp(expires_at)
+                expires_in_seconds = (expires_datetime - datetime.now()).total_seconds()
+
+                if expires_in_seconds < 0:
+                    expires_display = "Expired"
+                elif expires_in_seconds < 3600:  # Less than 1 hour
+                    minutes = int(expires_in_seconds / 60)
+                    expires_display = f"{minutes} min"
+                elif expires_in_seconds < 86400:  # Less than 1 day
+                    hours = int(expires_in_seconds / 3600)
+                    expires_display = f"{hours} hour{'s' if hours != 1 else ''}"
+                else:
+                    days = int(expires_in_seconds / 86400)
+                    expires_display = f"{days} day{'s' if days != 1 else ''}"
+
+            # Calculate token age (when it was issued)
+            age_display = "unknown"
+            age_seconds = None
             if issued_datetime:
                 age_seconds = (datetime.now() - issued_datetime).total_seconds()
                 age_hours = int(age_seconds / 3600)
@@ -330,14 +354,15 @@ def get_auth_info():
                     age_display = f"{age_hours} hour{'s' if age_hours != 1 else ''} ago"
                 else:
                     age_display = "< 1 hour ago"
-            else:
-                age_display = "unknown"
 
             return jsonify({
                 "user_email": user_email,
                 "token_issued_at": issued_datetime.isoformat() if issued_datetime else None,
                 "token_age": age_display,
-                "token_age_seconds": int(age_seconds) if issued_datetime else None,
+                "token_age_seconds": int(age_seconds) if age_seconds else None,
+                "token_expires_at": expires_datetime.isoformat() if expires_datetime else None,
+                "token_expires_in": expires_display,
+                "token_expires_in_seconds": int(expires_in_seconds) if expires_in_seconds else None,
                 "okta_subject": token_data.get('sub', 'unknown')
             })
         else:

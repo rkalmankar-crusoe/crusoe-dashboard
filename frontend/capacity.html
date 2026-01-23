@@ -877,18 +877,42 @@
                     // Display user email
                     document.getElementById('userEmail').textContent = `👤 ${authData.user_email}`;
 
-                    // Display token age with color coding
-                    const tokenAge = authData.token_age_seconds;
+                    // Display token expiration with color coding
+                    const expiresInSeconds = authData.token_expires_in_seconds;
                     const tokenAgeSpan = document.getElementById('tokenAge');
 
-                    if (tokenAge > 86400) { // > 24 hours
-                        tokenAgeSpan.style.color = '#FFB74D'; // Orange warning
-                        tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age} ⚠️`;
-                        tokenAgeSpan.title = 'Token is old - consider refreshing authentication';
+                    if (!expiresInSeconds && expiresInSeconds !== 0) {
+                        // No expiration or token doesn't have exp field - show age instead
+                        const tokenAge = authData.token_age_seconds;
+                        if (tokenAge > 86400) { // > 24 hours old
+                            tokenAgeSpan.style.color = '#FFB74D'; // Orange warning
+                            tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age} ⚠️`;
+                            tokenAgeSpan.title = `Token issued: ${new Date(authData.token_issued_at).toLocaleString()}\nToken is old - consider refreshing`;
+                        } else {
+                            tokenAgeSpan.style.color = '#90EE90'; // Green
+                            tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age}`;
+                            tokenAgeSpan.title = `Token issued: ${new Date(authData.token_issued_at).toLocaleString()}\nNo expiration`;
+                        }
+                    } else if (expiresInSeconds < 0) {
+                        // Token expired
+                        tokenAgeSpan.style.color = '#f44336'; // Red
+                        tokenAgeSpan.textContent = `🔐 Token: Expired ❌`;
+                        tokenAgeSpan.title = 'Token has expired - please re-authenticate';
+                    } else if (expiresInSeconds < 3600) {
+                        // Less than 1 hour - RED
+                        tokenAgeSpan.style.color = '#f44336'; // Red
+                        tokenAgeSpan.textContent = `🔐 Expires: ${authData.token_expires_in} ⚠️`;
+                        tokenAgeSpan.title = `Token expires at: ${new Date(authData.token_expires_at).toLocaleString()}\nPlease re-authenticate soon!`;
+                    } else if (expiresInSeconds < 28800) {
+                        // Less than 8 hours - YELLOW/ORANGE
+                        tokenAgeSpan.style.color = '#FFB74D'; // Orange/Yellow
+                        tokenAgeSpan.textContent = `🔐 Expires: ${authData.token_expires_in} ⚠️`;
+                        tokenAgeSpan.title = `Token expires at: ${new Date(authData.token_expires_at).toLocaleString()}`;
                     } else {
+                        // More than 8 hours - GREEN
                         tokenAgeSpan.style.color = '#90EE90'; // Green
-                        tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age}`;
-                        tokenAgeSpan.title = `Token issued: ${new Date(authData.token_issued_at).toLocaleString()}`;
+                        tokenAgeSpan.textContent = `🔐 Expires: ${authData.token_expires_in}`;
+                        tokenAgeSpan.title = `Token expires at: ${new Date(authData.token_expires_at).toLocaleString()}`;
                     }
                 }
             } catch (error) {
