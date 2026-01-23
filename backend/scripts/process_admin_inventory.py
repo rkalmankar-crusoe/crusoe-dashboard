@@ -170,18 +170,24 @@ def process_inventory():
         "total_gpus": 0,
         "available_nodes": 0,
         "available_gpus": 0,
+        "spare_nodes": 0,
+        "spare_gpus": 0,
         "floors": defaultdict(lambda: {
             "name": "",
             "total_nodes": 0,
             "total_gpus": 0,
             "available_nodes": 0,
             "available_gpus": 0,
+            "spare_nodes": 0,
+            "spare_gpus": 0,
             "racks": defaultdict(lambda: {
                 "name": "",
                 "total_nodes": 0,
                 "total_gpus": 0,
                 "available_nodes": 0,
                 "available_gpus": 0,
+                "spare_nodes": 0,
+                "spare_gpus": 0,
                 "ib_fabrics": defaultdict(lambda: {
                     "id": "",
                     "nodes": []
@@ -196,8 +202,10 @@ def process_inventory():
         "total_gpus": 0,
         "available_nodes": 0,
         "available_gpus": 0,
-        "gpu_models": defaultdict(lambda: {"total": 0, "available": 0}),
-        "vendors": defaultdict(lambda: {"total": 0, "available": 0}),
+        "spare_nodes": 0,
+        "spare_gpus": 0,
+        "gpu_models": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0}),
+        "vendors": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0}),
     }
 
     print("→ Processing nodes...")
@@ -229,6 +237,10 @@ def process_inventory():
             int(node.get("avail", 0)) > 0
         )
 
+        # Check if node is spare (unreserved)
+        is_reserved = node.get("reserved", "N") == "Y"
+        is_spare = is_available and not is_reserved
+
         # Node details
         node_detail = {
             "id": node["id"],
@@ -242,6 +254,8 @@ def process_inventory():
             "available_slices": int(node.get("avail", 0)),
             "used_slices": int(node.get("used", 0)) if node.get("used") else 0,
             "is_available": is_available,
+            "is_reserved": is_reserved,
+            "is_spare": is_spare,
             "ib_network_id": ib_network_id,
             "pod_id": node.get("pod_id", ""),
         }
@@ -271,6 +285,9 @@ def process_inventory():
         if is_available:
             rack_data["available_nodes"] += 1
             rack_data["available_gpus"] += gpus
+        if is_spare:
+            rack_data["spare_nodes"] += 1
+            rack_data["spare_gpus"] += gpus
 
         # Floor level
         floor_data["total_nodes"] += 1
@@ -278,6 +295,9 @@ def process_inventory():
         if is_available:
             floor_data["available_nodes"] += 1
             floor_data["available_gpus"] += gpus
+        if is_spare:
+            floor_data["spare_nodes"] += 1
+            floor_data["spare_gpus"] += gpus
 
         # Location level
         loc_data["total_nodes"] += 1
@@ -285,6 +305,9 @@ def process_inventory():
         if is_available:
             loc_data["available_nodes"] += 1
             loc_data["available_gpus"] += gpus
+        if is_spare:
+            loc_data["spare_nodes"] += 1
+            loc_data["spare_gpus"] += gpus
 
         # Global level
         global_stats["total_nodes"] += 1
@@ -292,19 +315,27 @@ def process_inventory():
         if is_available:
             global_stats["available_nodes"] += 1
             global_stats["available_gpus"] += gpus
+        if is_spare:
+            global_stats["spare_nodes"] += 1
+            global_stats["spare_gpus"] += gpus
 
         # GPU model stats
         global_stats["gpu_models"][gpu_info["name"]]["total"] += gpus
         if is_available:
             global_stats["gpu_models"][gpu_info["name"]]["available"] += gpus
+        if is_spare:
+            global_stats["gpu_models"][gpu_info["name"]]["spare"] += gpus
 
         # Vendor stats
         global_stats["vendors"][gpu_info["vendor"]]["total"] += gpus
         if is_available:
             global_stats["vendors"][gpu_info["vendor"]]["available"] += gpus
+        if is_spare:
+            global_stats["vendors"][gpu_info["vendor"]]["spare"] += gpus
 
     print(f"✓ Processed {global_stats['total_nodes']} nodes with {global_stats['total_gpus']} GPUs")
-    print(f"  Available: {global_stats['available_nodes']} nodes, {global_stats['available_gpus']} GPUs\n")
+    print(f"  Available: {global_stats['available_nodes']} nodes, {global_stats['available_gpus']} GPUs")
+    print(f"  Spare (Unreserved): {global_stats['spare_nodes']} nodes, {global_stats['spare_gpus']} GPUs\n")
 
     # Convert defaultdicts to regular dicts for JSON serialization
     def convert_to_dict(obj):

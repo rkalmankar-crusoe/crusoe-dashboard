@@ -12,6 +12,7 @@ from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 import subprocess
 import json
+import os
 from pathlib import Path
 import threading
 import time
@@ -50,7 +51,10 @@ def run_refresh_task():
             "nodes", "list", "--format", "json"
         ]
 
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # Pass environment variables needed by cloud-admin (HOME, PATH, etc.)
+        env = os.environ.copy()
+
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, env=env)
 
         with open(admin_inventory_file, 'w') as f:
             f.write(result.stdout)

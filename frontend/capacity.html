@@ -224,6 +224,16 @@
             color: #FFB6B0;
         }
 
+        .badge-spare {
+            background: rgba(33, 150, 243, 0.3);
+            color: #64B5F6;
+        }
+
+        .badge-reserved {
+            background: rgba(255, 152, 0, 0.3);
+            color: #FFB74D;
+        }
+
         .collapse-icon {
             font-size: 0.8em;
             transition: transform 0.3s;
@@ -284,6 +294,235 @@
             color: #aaa;
             margin-top: 5px;
         }
+
+        /* Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chat-bubble {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+
+        .chat-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .chat-bubble svg {
+            color: white;
+        }
+
+        .chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 400px;
+            height: 600px;
+            background: #1a1a1a;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .chat-header-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-clear {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 0.85em;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+            font-weight: 500;
+        }
+
+        .chat-clear:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+
+        .chat-message.bot .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-size: 0.95em;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .chat-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+        }
+
+        .chat-input::placeholder {
+            color: #888;
+        }
+
+        .chat-send {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .chat-send:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .chat-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-message ul {
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .chat-message code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .chat-window {
+                width: calc(100vw - 40px);
+                height: calc(100vh - 100px);
+                bottom: 70px;
+                right: -10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -325,6 +564,11 @@
                 <div class="capacity-title">Available Capacity</div>
                 <div class="capacity-value" id="availableNodes">-</div>
                 <div class="capacity-subtitle"><span id="availableGPUs">-</span> GPUs (<span id="availablePercent">-</span>%)</div>
+            </div>
+            <div class="capacity-card" style="border-color: rgba(33, 150, 243, 0.5); background: rgba(33, 150, 243, 0.1);" title="Unreserved nodes available for immediate provisioning (not allocated to any customer)">
+                <div class="capacity-title">Spare Capacity</div>
+                <div class="capacity-value" id="spareNodes">-</div>
+                <div class="capacity-subtitle"><span id="spareGPUs">-</span> GPUs (<span id="sparePercent">-</span>%)</div>
             </div>
             <div class="capacity-card" title="Number of datacenter locations and floors (updates based on filters)">
                 <div class="capacity-title">Locations</div>
@@ -391,6 +635,8 @@
                 <select id="availabilityFilter" class="filter-select" onchange="applyFilters()">
                     <option value="">All Nodes</option>
                     <option value="available">Available Only</option>
+                    <option value="spare">Spare Only (Unreserved)</option>
+                    <option value="reserved">Reserved Only</option>
                     <option value="used">Used Only</option>
                 </select>
             </div>
@@ -436,6 +682,52 @@
     <!-- Back to Top Button -->
     <div class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</div>
 
+    <!-- Chat Widget -->
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-bubble" id="chatBubble" onclick="toggleChat()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </div>
+        <div class="chat-window" id="chatWindow" style="display: none;">
+            <div class="chat-header">
+                <h3>Capacity Assistant</h3>
+                <div class="chat-header-buttons">
+                    <button class="chat-clear" onclick="clearConversation()" title="Clear conversation history">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Clear
+                    </button>
+                    <button class="chat-close" onclick="toggleChat()">×</button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message bot">
+                    <div class="message-content">
+                        Hi! I can help you query datacenter capacity. Try asking:
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>"How many H100 GPUs are available in Iceland?"</li>
+                            <li>"Show me all L40S nodes"</li>
+                            <li>"What's the total capacity?"</li>
+                            <li>"Which location has the most GPUs?"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Ask about capacity..." onkeypress="handleChatKeypress(event)">
+                <button class="chat-send" onclick="sendChatMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/dashboard.js"></script>
     <script>
         let inventoryData = null;
@@ -450,6 +742,9 @@
             availability: '',
             mode: ''
         };
+
+        // Chat conversation history for context
+        let conversationHistory = [];
 
         // Load inventory data
         async function loadInventory() {
@@ -518,6 +813,12 @@
 
             const availPercent = (stats.available_gpus / stats.total_gpus * 100).toFixed(1);
             document.getElementById('availablePercent').textContent = availPercent;
+
+            document.getElementById('spareNodes').textContent = (stats.spare_nodes || 0).toLocaleString();
+            document.getElementById('spareGPUs').textContent = (stats.spare_gpus || 0).toLocaleString();
+
+            const sparePercent = stats.total_gpus > 0 ? (stats.spare_gpus / stats.total_gpus * 100).toFixed(1) : '0.0';
+            document.getElementById('sparePercent').textContent = sparePercent;
 
             document.getElementById('locationCount').textContent = Object.keys(inventoryData.locations).length;
 
@@ -740,6 +1041,8 @@
                 total_gpus: 0,
                 available_nodes: 0,
                 available_gpus: 0,
+                spare_nodes: 0,
+                spare_gpus: 0,
                 locations: {},
                 gpu_models: {},
                 floors: new Set()
@@ -756,6 +1059,8 @@
                     total_gpus: 0,
                     available_nodes: 0,
                     available_gpus: 0,
+                    spare_nodes: 0,
+                    spare_gpus: 0,
                     floors: 0
                 };
 
@@ -792,6 +1097,13 @@
                                     locStats.available_gpus += node.gpu_count;
                                 }
 
+                                if (node.is_spare) {
+                                    filteredStats.spare_nodes++;
+                                    filteredStats.spare_gpus += node.gpu_count;
+                                    locStats.spare_nodes++;
+                                    locStats.spare_gpus += node.gpu_count;
+                                }
+
                                 // Track GPU models
                                 if (!filteredStats.gpu_models[node.gpu_type]) {
                                     filteredStats.gpu_models[node.gpu_type] = 0;
@@ -821,6 +1133,14 @@
                 ? (stats.available_gpus / stats.total_gpus * 100).toFixed(1)
                 : 0;
             document.getElementById('availablePercent').textContent = availPercent;
+
+            document.getElementById('spareNodes').textContent = (stats.spare_nodes || 0).toLocaleString();
+            document.getElementById('spareGPUs').textContent = (stats.spare_gpus || 0).toLocaleString();
+
+            const sparePercent = stats.total_gpus > 0
+                ? (stats.spare_gpus / stats.total_gpus * 100).toFixed(1)
+                : 0;
+            document.getElementById('sparePercent').textContent = sparePercent;
 
             document.getElementById('locationCount').textContent = Object.keys(stats.locations).length;
             document.getElementById('floorCount').textContent = stats.floors.size;
@@ -1051,6 +1371,8 @@
                     <span class="node-badge ${node.is_available ? 'badge-available' : 'badge-used'}" title="Number of node slices available for provisioning (each slice represents a portion of the node's resources)">
                         ${node.available_slices > 0 ? `${node.available_slices} slices avail` : 'Fully used'}
                     </span>
+                    ${node.is_spare ? '<span class="node-badge badge-spare" title="Unreserved - Available for immediate provisioning">SPARE</span>' : ''}
+                    ${node.is_reserved && node.is_available ? '<span class="node-badge badge-reserved" title="Reserved to customer but has available capacity">RESERVED</span>' : ''}
                 </div>
             `;
 
@@ -1072,12 +1394,18 @@
                 return false;
             }
 
-            // Availability filter (substring match)
+            // Availability filter
             if (currentFilters.availability) {
-                if (currentFilters.availability.includes('avail') && !node.is_available) {
+                if (currentFilters.availability === 'available' && !node.is_available) {
                     return false;
                 }
-                if (currentFilters.availability.includes('use') && node.is_available) {
+                if (currentFilters.availability === 'spare' && !node.is_spare) {
+                    return false;
+                }
+                if (currentFilters.availability === 'reserved' && (!node.is_reserved || !node.is_available)) {
+                    return false;
+                }
+                if (currentFilters.availability === 'used' && node.is_available) {
                     return false;
                 }
             }
@@ -1201,6 +1529,322 @@
                 backToTop.classList.remove('visible');
             }
         });
+
+        // Chat Widget Functions
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            const chatBubble = document.getElementById('chatBubble');
+
+            if (chatWindow.style.display === 'none') {
+                chatWindow.style.display = 'flex';
+                chatBubble.style.display = 'none';
+                // Focus on input when opening
+                setTimeout(() => {
+                    document.getElementById('chatInput').focus();
+                }, 100);
+            } else {
+                chatWindow.style.display = 'none';
+                chatBubble.style.display = 'flex';
+            }
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to history and display
+            conversationHistory.push({ type: 'user', content: message });
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Process query and respond
+            setTimeout(() => {
+                const response = processQuery(message);
+                conversationHistory.push({ type: 'bot', content: response });
+                addChatMessage(response, 'bot');
+            }, 500);
+        }
+
+        function clearConversation() {
+            // Clear conversation history
+            conversationHistory = [];
+
+            // Clear messages display (keep only the welcome message)
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = `
+                <div class="chat-message bot">
+                    <div class="message-content">
+                        Hi! I can help you query datacenter capacity. Try asking:
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>"How many H100 GPUs are available in Iceland?"</li>
+                            <li>"Show me all L40S nodes"</li>
+                            <li>"What's the total capacity?"</li>
+                            <li>"Which location has the most GPUs?"</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            // Show brief confirmation
+            addChatMessage('Conversation cleared. Context has been reset.', 'bot');
+            setTimeout(() => {
+                // Remove the confirmation message after 2 seconds
+                const messages = messagesContainer.querySelectorAll('.chat-message');
+                if (messages.length > 2) {
+                    messages[messages.length - 1].remove();
+                }
+            }, 2000);
+        }
+
+        function addChatMessage(content, type) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content;
+
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function processQuery(query) {
+            if (!inventoryData) {
+                return "I don't have access to inventory data yet. Please wait for the dashboard to load.";
+            }
+
+            const queryLower = query.toLowerCase();
+
+            // Extract context from previous conversation
+            const context = extractConversationContext();
+
+            // Query patterns
+            const patterns = {
+                totalCapacity: /(?:total|overall|all).*(capacity|gpus?|nodes?)/i,
+                gpuModel: /(h100|h200|l40s|gb200|b200|a100|mi300x)/i,
+                location: /(iceland|virginia|dallas|us west|icat|vaeq|txdr|nvrm)/i,
+                available: /(?:available|free|unused)/i,
+                count: /(?:how many|count|number of)/i,
+                mostGpus: /(?:most|highest|maximum).*(gpus?|capacity)/i,
+                floor: /floor\s*([a-z0-9]+)/i,
+                ibNetwork: /(?:infiniband|ib\s*network)/i,
+                mode: /(?:maintenance|setup|normal|freeze)/i,
+                followUp: /^(?:what about|how about|and in|and for|what's in|also)/i,
+                sameLocation: /^(?:there|in that location|same location)/i,
+                comparison: /^(?:compare|vs|versus|difference)/i
+            };
+
+            // Handle follow-up questions using context
+            if (patterns.followUp.test(queryLower) || patterns.sameLocation.test(queryLower)) {
+                // Extract new parameters from query
+                let contextualQuery = query;
+
+                // If asking "what about X" or "and in Y", inherit context
+                if (!patterns.location.test(queryLower) && context.lastLocation) {
+                    contextualQuery += ` in ${context.lastLocation}`;
+                }
+                if (!patterns.gpuModel.test(queryLower) && context.lastGpuType) {
+                    contextualQuery += ` ${context.lastGpuType}`;
+                }
+
+                // Re-run query with inherited context
+                return processQuery(contextualQuery.replace(/^(what about|how about|and in|and for|there|in that location|same location)\s*/i, ''));
+            }
+
+            // Total capacity query
+            if (patterns.totalCapacity.test(queryLower)) {
+                const stats = inventoryData.global_stats;
+                return `Total datacenter capacity:<br>
+                    • <strong>${stats.total_nodes.toLocaleString()}</strong> nodes<br>
+                    • <strong>${stats.total_gpus.toLocaleString()}</strong> GPUs<br>
+                    • <strong>${stats.available_nodes.toLocaleString()}</strong> available nodes<br>
+                    • <strong>${stats.available_gpus.toLocaleString()}</strong> available GPUs`;
+            }
+
+            // GPU model + location query (with context fallback)
+            let gpuMatch = queryLower.match(patterns.gpuModel);
+            let locationMatch = queryLower.match(patterns.location);
+            const isAvailable = patterns.available.test(queryLower);
+
+            // Use context if location/GPU not specified
+            if (!locationMatch && context.lastLocation && patterns.count.test(queryLower)) {
+                locationMatch = [null, context.lastLocation];
+            }
+            if (!gpuMatch && context.lastGpuType && patterns.count.test(queryLower)) {
+                gpuMatch = [null, context.lastGpuType];
+            }
+
+            if (gpuMatch) {
+                const gpuType = gpuMatch[1].toUpperCase();
+                let result = findGPUsByType(gpuType, locationMatch ? locationMatch[1] : null, isAvailable);
+                return result;
+            }
+
+            // Location-specific query
+            if (locationMatch && !gpuMatch) {
+                const location = locationMatch[1];
+                let result = getLocationInfo(location, isAvailable);
+                return result;
+            }
+
+            // Which location has the most GPUs
+            if (patterns.mostGpus.test(queryLower)) {
+                let maxGpus = 0;
+                let maxLocation = '';
+
+                for (const locKey in inventoryData.locations) {
+                    const loc = inventoryData.locations[locKey];
+                    const gpuCount = isAvailable ? loc.available_gpus : loc.total_gpus;
+                    if (gpuCount > maxGpus) {
+                        maxGpus = gpuCount;
+                        maxLocation = loc.name;
+                    }
+                }
+
+                return `<strong>${maxLocation}</strong> has the most ${isAvailable ? 'available' : 'total'} GPUs with <strong>${maxGpus.toLocaleString()}</strong> GPUs.`;
+            }
+
+            // InfiniBand query
+            if (patterns.ibNetwork.test(queryLower)) {
+                return "To filter by InfiniBand network, use the <strong>IB Network</strong> dropdown filter above. Select a specific IB network UUID or choose \"Non-IB (Ethernet only)\" for nodes without InfiniBand.";
+            }
+
+            // Default response with suggestions
+            return `I'm not sure how to answer that. Try asking:<br>
+                • "How many H100 GPUs are available?"<br>
+                • "What's the total capacity in Iceland?"<br>
+                • "Show me all L40S nodes"<br>
+                • "Which location has the most GPUs?"<br>
+                • "How many available nodes in Virginia?"`;
+        }
+
+        function findGPUsByType(gpuType, location, availableOnly) {
+            const gpuTypeMap = {
+                'H100': 'H100-SXM-80GB',
+                'H200': 'H200-SXM-141GB',
+                'L40S': 'L40S-48GB',
+                'GB200': 'GB200-NVL-186GB',
+                'B200': 'B200-SXM-180GB',
+                'A100': 'A100-SXM-80GB',
+                'MI300X': 'MI300X-192GB'
+            };
+
+            const fullGpuType = gpuTypeMap[gpuType] || gpuType;
+            const stats = inventoryData.global_stats.gpu_models[fullGpuType];
+
+            if (!stats) {
+                return `GPU type <strong>${gpuType}</strong> not found in inventory.`;
+            }
+
+            if (location) {
+                // Find location-specific count
+                let locCount = 0;
+                let locName = '';
+
+                for (const locKey in inventoryData.locations) {
+                    const loc = inventoryData.locations[locKey];
+                    if (loc.name.toLowerCase().includes(location.toLowerCase()) || locKey.toLowerCase().includes(location.toLowerCase())) {
+                        locName = loc.name;
+                        // Count GPUs in this location
+                        for (const floorKey in loc.floors) {
+                            const floor = loc.floors[floorKey];
+                            for (const rackKey in floor.racks) {
+                                const rack = floor.racks[rackKey];
+                                for (const ibKey in rack.ib_fabrics) {
+                                    const fabric = rack.ib_fabrics[ibKey];
+                                    for (const node of fabric.nodes) {
+                                        if (node.gpu_type === fullGpuType) {
+                                            if (!availableOnly || node.is_available) {
+                                                locCount += node.num_gpus;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if (locName) {
+                    return `<strong>${fullGpuType}</strong> in <strong>${locName}</strong>:<br>
+                        • ${locCount.toLocaleString()} GPUs ${availableOnly ? '(available)' : ''}`;
+                }
+            }
+
+            const count = availableOnly ? stats.available : stats.total;
+            return `<strong>${fullGpuType}</strong> globally:<br>
+                • <strong>${stats.total.toLocaleString()}</strong> total GPUs<br>
+                • <strong>${stats.available.toLocaleString()}</strong> available GPUs`;
+        }
+
+        function getLocationInfo(location, availableOnly) {
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                if (loc.name.toLowerCase().includes(location.toLowerCase()) || locKey.toLowerCase().includes(location.toLowerCase())) {
+                    return `<strong>${loc.name}</strong> datacenter:<br>
+                        • <strong>${loc.total_nodes.toLocaleString()}</strong> total nodes<br>
+                        • <strong>${loc.total_gpus.toLocaleString()}</strong> total GPUs<br>
+                        • <strong>${loc.available_nodes.toLocaleString()}</strong> available nodes<br>
+                        • <strong>${loc.available_gpus.toLocaleString()}</strong> available GPUs<br>
+                        • <strong>${Object.keys(loc.floors).length}</strong> floors`;
+                }
+            }
+
+            return `Location <strong>${location}</strong> not found. Available locations: Iceland, Virginia, Dallas, US West.`;
+        }
+
+        function extractConversationContext() {
+            const context = {
+                lastLocation: null,
+                lastGpuType: null,
+                lastAvailabilityFilter: null
+            };
+
+            // Look at recent messages (last 3 user messages)
+            const recentUserMessages = conversationHistory
+                .filter(msg => msg.type === 'user')
+                .slice(-3);
+
+            const locationPattern = /(iceland|virginia|dallas|us west|icat|vaeq|txdr|nvrm)/i;
+            const gpuPattern = /(h100|h200|l40s|gb200|b200|a100|mi300x)/i;
+            const availablePattern = /(?:available|free|unused)/i;
+
+            // Extract context from recent messages (most recent first)
+            for (let i = recentUserMessages.length - 1; i >= 0; i--) {
+                const msg = recentUserMessages[i].content.toLowerCase();
+
+                if (!context.lastLocation) {
+                    const locMatch = msg.match(locationPattern);
+                    if (locMatch) context.lastLocation = locMatch[1];
+                }
+
+                if (!context.lastGpuType) {
+                    const gpuMatch = msg.match(gpuPattern);
+                    if (gpuMatch) context.lastGpuType = gpuMatch[1];
+                }
+
+                if (!context.lastAvailabilityFilter) {
+                    if (availablePattern.test(msg)) {
+                        context.lastAvailabilityFilter = 'available';
+                    }
+                }
+            }
+
+            return context;
+        }
 
         // Load inventory on page load
         window.addEventListener('load', loadInventory);
