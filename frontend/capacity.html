@@ -234,6 +234,11 @@
             color: #FFB74D;
         }
 
+        .badge-hot-spare {
+            background: rgba(156, 39, 176, 0.3);
+            color: #BA68C8;
+        }
+
         .collapse-icon {
             font-size: 0.8em;
             transition: transform 0.3s;
@@ -1386,6 +1391,7 @@
                     </span>
                     ${node.is_spare ? '<span class="node-badge badge-spare" title="Unreserved - Available for immediate provisioning">SPARE</span>' : ''}
                     ${node.is_reserved && node.is_available ? '<span class="node-badge badge-reserved" title="Reserved to customer but has available capacity">RESERVED</span>' : ''}
+                    ${node.is_hot_spare ? '<span class="node-badge badge-hot-spare" title="Hot spare: powered on, configured, ready for immediate deployment">HOT SPARE</span>' : ''}
                 </div>
             `;
 
