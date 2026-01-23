@@ -1,6 +1,9 @@
-# No external Python dependencies required
-# This script uses the Crusoe CLI via subprocess
+# Python dependencies for admin API integration
+requests>=2.28.0
+flask>=2.3.0
+flask-cors>=4.0.0
 
 # Prerequisites:
 # - crusoe CLI must be installed: brew install crusoe-cloud/tap/crusoe
 # - crusoe CLI must be configured: crusoe config init
+# - Admin API token must be available at ~/.crusoe/admin-token-prod

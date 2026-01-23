@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crusoe Cloud - Datacenter Capacity Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .capacity-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .capacity-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+
+        .capacity-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .capacity-card.available {
+            border-color: rgba(76, 175, 80, 0.5);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .capacity-title {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .capacity-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .capacity-subtitle {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .filter-bar {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 0.85em;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #fff;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-select:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .filter-select option {
+            background: #2d2d2d;
+            color: #fff;
+        }
+
+        .floor-container {
+            margin-bottom: 40px;
+        }
+
+        .floor-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            padding: 20px 30px;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .floor-header:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+            transform: translateX(5px);
+        }
+
+        .floor-header.collapsed {
+            border-left-color: #666;
+        }
+
+        .floor-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .floor-stats {
+            display: flex;
+            gap: 30px;
+            font-size: 0.95em;
+            color: #ccc;
+        }
+
+        .floor-content {
+            padding: 0 15px;
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+
+        .floor-content.collapsed {
+            max-height: 0;
+        }
+
+        .ib-fabric-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 3px solid #2196F3;
+        }
+
+        .ib-fabric-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2196F3;
+        }
+
+        .node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .node-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .node-card.available {
+            border-color: rgba(76, 175, 80, 0.5);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+        }
+
+        .node-card.unavailable {
+            border-color: rgba(158, 158, 158, 0.3);
+            opacity: 0.6;
+        }
+
+        .node-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+        }
+
+        .node-name {
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .node-detail {
+            font-size: 0.85em;
+            margin: 5px 0;
+            color: #ccc;
+        }
+
+        .node-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 0.75em;
+            margin: 2px;
+        }
+
+        .badge-available {
+            background: rgba(76, 175, 80, 0.3);
+            color: #90EE90;
+        }
+
+        .badge-used {
+            background: rgba(244, 67, 54, 0.3);
+            color: #FFB6B0;
+        }
+
+        .collapse-icon {
+            font-size: 0.8em;
+            transition: transform 0.3s;
+        }
+
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .gpu-type-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.2em;
+            color: #999;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            color: #ff6b6b;
+        }
+
+        .location-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .summary-label {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="flex: 1;"></div>
+                <div style="flex: 1; text-align: center;">
+                    <h1>🌐 Crusoe Cloud</h1>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <button onclick="refreshDashboard()" class="refresh-btn" title="Refresh data">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="subtitle">Physical Datacenter Capacity Dashboard</div>
+            <div id="lastUpdated" style="color: #888; font-size: 0.9em; margin-top: 15px;">
+                Last updated: <span id="updateTime">Loading...</span>
+            </div>
+
+            <!-- Refresh Progress Bar -->
+            <div id="refreshProgress" style="display: none; margin-top: 20px;">
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; height: 8px;">
+                    <div id="progressBar" style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                <div id="progressMessage" style="text-align: center; margin-top: 10px; font-size: 0.9em; color: #4CAF50;"></div>
+            </div>
+        </header>
+
+        <!-- Global Capacity Overview -->
+        <div class="capacity-overview">
+            <div class="capacity-card" title="Total physical nodes and GPUs in the datacenter (updates based on filters)">
+                <div class="capacity-title">Total Infrastructure</div>
+                <div class="capacity-value" id="totalNodes">-</div>
+                <div class="capacity-subtitle"><span id="totalGPUs">-</span> GPUs</div>
+            </div>
+            <div class="capacity-card available" title="Nodes and GPUs that are available for provisioning (not currently allocated)">
+                <div class="capacity-title">Available Capacity</div>
+                <div class="capacity-value" id="availableNodes">-</div>
+                <div class="capacity-subtitle"><span id="availableGPUs">-</span> GPUs (<span id="availablePercent">-</span>%)</div>
+            </div>
+            <div class="capacity-card" title="Number of datacenter locations and floors (updates based on filters)">
+                <div class="capacity-title">Locations</div>
+                <div class="capacity-value" id="locationCount">-</div>
+                <div class="capacity-subtitle"><span id="floorCount">-</span> floors total</div>
+            </div>
+            <div class="capacity-card" title="Number of different GPU models available (NVIDIA H200, H100, GB200, AMD MI300X, etc.)">
+                <div class="capacity-title">GPU Models</div>
+                <div class="capacity-value" id="gpuModelCount">-</div>
+                <div class="capacity-subtitle">Different types</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by datacenter location">Location</label>
+                <select id="locationFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by GPU vendor/manufacturer">GPU Provider</label>
+                <select id="vendorFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Vendors</option>
+                    <option value="NVIDIA">NVIDIA</option>
+                    <option value="AMD">AMD</option>
+                    <option value="CPU">CPU-Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by floor within the selected location">Floor</label>
+                <select id="floorFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Floors</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by InfiniBand network fabric">IB Network</label>
+                <select id="ibNetworkFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All IB Networks</option>
+                    <option value="no-ib">Non-IB (Ethernet only)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by infrastructure pod/resource pool">Pod ID</label>
+                <select id="podIdFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Pods</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by equipment rack">Rack</label>
+                <select id="rackFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Racks</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by GPU model">GPU Type</label>
+                <select id="gpuTypeFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All GPU Types</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by node availability status">Availability</label>
+                <select id="availabilityFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Nodes</option>
+                    <option value="available">Available Only</option>
+                    <option value="used">Used Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label" title="Filter by node operational mode">Mode</label>
+                <select id="modeFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="">All Modes</option>
+                    <option value="AGENT_MODE_NORMAL">Normal</option>
+                    <option value="AGENT_MODE_SETUP">Setup</option>
+                    <option value="AGENT_MODE_NOT_READY">Not Ready</option>
+                    <option value="AGENT_MODE_FREEZE_ENV">Freeze Environment</option>
+                    <option value="AGENT_MODE_MAINTENANCE">Maintenance</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabs for locations -->
+        <div id="tabsPlaceholder" class="tabs-placeholder"></div>
+        <div class="tabs" id="mainTabs">
+            <div class="tab active" onclick="showAllLocations()">All Locations</div>
+        </div>
+
+        <!-- Loading/Error States -->
+        <div id="loading" class="loading">
+            Loading datacenter inventory...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            Failed to load datacenter inventory. Please check the backend data files.
+        </div>
+
+        <!-- Inventory Content -->
+        <div id="inventoryContent" style="display: none;"></div>
+
+        <footer>
+            <p>&copy; 2026 Crusoe Cloud - Physical Datacenter Capacity Dashboard</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Powered by cloud-admin CLI | Location → Floor → IB Network → Pod ID → Rack → Node → GPU
+            </p>
+        </footer>
+    </div>
+
+    <!-- Back to Top Button -->
+    <div class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</div>
+
+    <script src="js/dashboard.js"></script>
+    <script>
+        let inventoryData = null;
+        let currentFilters = {
+            location: '',
+            floor: '',
+            ibNetwork: '',
+            podId: '',
+            rack: '',
+            vendor: '',
+            gpuType: '',
+            availability: '',
+            mode: ''
+        };
+
+        // Load inventory data
+        async function loadInventory() {
+            try {
+                // Try API endpoint first, fall back to static file
+                let response;
+                try {
+                    response = await fetch('/api/data/inventory');
+                } catch (e) {
+                    response = await fetch('../backend/data/datacenter_inventory.json');
+                }
+
+                if (!response.ok) throw new Error('Failed to fetch inventory');
+
+                inventoryData = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('inventoryContent').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+
+                updateGlobalStats();
+                populateFilters();
+                createLocationTabs();
+                renderInventory();
+
+                // Update timestamp
+                if (inventoryData.last_updated) {
+                    const date = new Date(inventoryData.last_updated);
+                    document.getElementById('updateTime').textContent = date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        // Get vendor for a GPU type
+        function getVendorForGpuType(gpuType) {
+            // Based on GPU_TYPE_MAP from backend/scripts/process_admin_inventory.py
+            if (gpuType.includes('MI300X') || gpuType.includes('MI355X')) {
+                return 'AMD';
+            }
+            if (gpuType.includes('CPU-Only')) {
+                return 'CPU';
+            }
+            // All others (H100, H200, GB200, B200, L40S, A100) are NVIDIA
+            return 'NVIDIA';
+        }
+
+        // Update global statistics
+        function updateGlobalStats() {
+            const stats = inventoryData.global_stats;
+
+            document.getElementById('totalNodes').textContent = stats.total_nodes.toLocaleString();
+            document.getElementById('totalGPUs').textContent = stats.total_gpus.toLocaleString();
+            document.getElementById('availableNodes').textContent = stats.available_nodes.toLocaleString();
+            document.getElementById('availableGPUs').textContent = stats.available_gpus.toLocaleString();
+
+            const availPercent = (stats.available_gpus / stats.total_gpus * 100).toFixed(1);
+            document.getElementById('availablePercent').textContent = availPercent;
+
+            document.getElementById('locationCount').textContent = Object.keys(inventoryData.locations).length;
+
+            let totalFloors = 0;
+            for (const loc in inventoryData.locations) {
+                totalFloors += Object.keys(inventoryData.locations[loc].floors).length;
+            }
+            document.getElementById('floorCount').textContent = totalFloors;
+
+            document.getElementById('gpuModelCount').textContent = Object.keys(stats.gpu_models).length;
+        }
+
+        // Populate select dropdown options for filters
+        function populateFilters() {
+            const locationFilter = document.getElementById('locationFilter');
+            const floorFilter = document.getElementById('floorFilter');
+            const ibNetworkFilter = document.getElementById('ibNetworkFilter');
+            const podIdFilter = document.getElementById('podIdFilter');
+            const rackFilter = document.getElementById('rackFilter');
+            const gpuTypeFilter = document.getElementById('gpuTypeFilter');
+
+            // Populate locations
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                const option = document.createElement('option');
+                option.value = locKey;
+                option.textContent = loc.name;
+                locationFilter.appendChild(option);
+            }
+
+            // Populate floors
+            const floors = new Set();
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                for (const floorKey in loc.floors) {
+                    floors.add(floorKey);
+                }
+            }
+            for (const floorKey of Array.from(floors).sort()) {
+                const option = document.createElement('option');
+                option.value = floorKey;
+                option.textContent = floorKey;
+                floorFilter.appendChild(option);
+            }
+
+            // Populate IB Networks
+            const ibNetworks = new Set();
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                for (const floorKey in loc.floors) {
+                    const floor = loc.floors[floorKey];
+                    for (const rackKey in floor.racks) {
+                        const rack = floor.racks[rackKey];
+                        for (const ibKey in rack.ib_fabrics) {
+                            if (ibKey !== 'no-ib') {
+                                ibNetworks.add(ibKey);
+                            }
+                        }
+                    }
+                }
+            }
+            for (const ibKey of Array.from(ibNetworks).sort()) {
+                const option = document.createElement('option');
+                option.value = ibKey;
+                option.textContent = ibKey.substring(0, 8) + '...';
+                option.title = ibKey;
+                ibNetworkFilter.appendChild(option);
+            }
+
+            // Populate Pod IDs
+            const podIds = new Set();
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                for (const floorKey in loc.floors) {
+                    const floor = loc.floors[floorKey];
+                    for (const rackKey in floor.racks) {
+                        const rack = floor.racks[rackKey];
+                        for (const ibKey in rack.ib_fabrics) {
+                            const fabric = rack.ib_fabrics[ibKey];
+                            for (const node of fabric.nodes) {
+                                if (node.pod_id) {
+                                    podIds.add(node.pod_id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for (const podId of Array.from(podIds).sort()) {
+                const option = document.createElement('option');
+                option.value = podId;
+                option.textContent = podId;
+                podIdFilter.appendChild(option);
+            }
+
+            // Populate racks
+            const racks = new Set();
+            for (const locKey in inventoryData.locations) {
+                const loc = inventoryData.locations[locKey];
+                for (const floorKey in loc.floors) {
+                    const floor = loc.floors[floorKey];
+                    for (const rackKey in floor.racks) {
+                        racks.add(rackKey);
+                    }
+                }
+            }
+            for (const rackKey of Array.from(racks).sort()) {
+                const option = document.createElement('option');
+                option.value = rackKey;
+                option.textContent = rackKey;
+                rackFilter.appendChild(option);
+            }
+
+            // Populate GPU types
+            const gpuTypes = Object.keys(inventoryData.global_stats.gpu_models).sort();
+            for (const gpuType of gpuTypes) {
+                const option = document.createElement('option');
+                option.value = gpuType;
+                option.textContent = gpuType;
+                gpuTypeFilter.appendChild(option);
+            }
+        }
+
+        // Create location tabs
+        function createLocationTabs() {
+            const tabsContainer = document.getElementById('mainTabs');
+
+            // Clear ALL tabs first
+            tabsContainer.innerHTML = '';
+
+            // Re-add "All Locations" tab
+            const allTab = document.createElement('div');
+            allTab.className = 'tab active';
+            allTab.textContent = 'All Locations';
+            allTab.onclick = showAllLocations;
+            tabsContainer.appendChild(allTab);
+
+            // Add location tabs (ensure no duplicates)
+            const addedLocations = new Set();
+            for (const locKey in inventoryData.locations) {
+                if (addedLocations.has(locKey)) continue; // Skip duplicates
+                addedLocations.add(locKey);
+
+                const loc = inventoryData.locations[locKey];
+                const tab = document.createElement('div');
+                tab.className = 'tab';
+                tab.textContent = loc.name;
+                tab.onclick = () => showLocation(locKey);
+                tabsContainer.appendChild(tab);
+            }
+        }
+
+        // Show specific location
+        function showLocation(locationKey) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Set filter and render
+            currentFilters.location = locationKey;
+            document.getElementById('locationFilter').value = locationKey;
+
+            // Update dependent filters to show only relevant options
+            updateDependentFilters();
+
+            renderInventory();
+        }
+
+        // Show all locations
+        function showAllLocations() {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            currentFilters.location = '';
+            document.getElementById('locationFilter').value = '';
+
+            // Update dependent filters to show all options
+            updateDependentFilters();
+
+            renderInventory();
+        }
+
+        // Update dependent filter options based on current selections
+        // No need for dependent filters with free-form text inputs
+        function updateDependentFilters() {
+            // Text inputs are independent - no cascading needed
+        }
+
+        // Apply filters (free-form text inputs with case-insensitive substring matching)
+        function applyFilters() {
+            // Read filter values and convert to lowercase for case-insensitive matching
+            currentFilters.location = document.getElementById('locationFilter').value.trim().toLowerCase();
+            currentFilters.floor = document.getElementById('floorFilter').value.trim().toLowerCase();
+            currentFilters.ibNetwork = document.getElementById('ibNetworkFilter').value.trim().toLowerCase();
+            currentFilters.podId = document.getElementById('podIdFilter').value.trim().toLowerCase();
+            currentFilters.rack = document.getElementById('rackFilter').value.trim().toLowerCase();
+            currentFilters.vendor = document.getElementById('vendorFilter').value.trim().toLowerCase();
+            currentFilters.gpuType = document.getElementById('gpuTypeFilter').value.trim().toLowerCase();
+            currentFilters.availability = document.getElementById('availabilityFilter').value.trim().toLowerCase();
+            currentFilters.mode = document.getElementById('modeFilter').value.trim().toUpperCase();
+
+            renderInventory();
+        }
+
+        // Toggle floor collapse
+        function toggleFloor(floorId) {
+            const content = document.getElementById(`floor-content-${floorId}`);
+            const header = document.getElementById(`floor-header-${floorId}`);
+            const icon = document.getElementById(`floor-icon-${floorId}`);
+
+            content.classList.toggle('collapsed');
+            header.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        }
+
+        // Calculate filtered statistics
+        function calculateFilteredStats() {
+            let filteredStats = {
+                total_nodes: 0,
+                total_gpus: 0,
+                available_nodes: 0,
+                available_gpus: 0,
+                locations: {},
+                gpu_models: {},
+                floors: new Set()
+            };
+
+            for (const locKey in inventoryData.locations) {
+                // Apply location filter (case-insensitive substring match)
+                if (currentFilters.location && !locKey.toLowerCase().includes(currentFilters.location)) continue;
+
+                const loc = inventoryData.locations[locKey];
+
+                let locStats = {
+                    total_nodes: 0,
+                    total_gpus: 0,
+                    available_nodes: 0,
+                    available_gpus: 0,
+                    floors: 0
+                };
+
+                for (const floorKey in loc.floors) {
+                    // Apply floor filter (case-insensitive substring match)
+                    if (currentFilters.floor && !floorKey.toLowerCase().includes(currentFilters.floor)) continue;
+
+                    filteredStats.floors.add(floorKey);
+                    locStats.floors++;
+
+                    const floor = loc.floors[floorKey];
+
+                    for (const rackKey in floor.racks) {
+                        // Apply rack filter
+                        if (currentFilters.rack && currentFilters.rack !== rackKey) continue;
+
+                        const rack = floor.racks[rackKey];
+
+                        for (const ibKey in rack.ib_fabrics) {
+                            const fabric = rack.ib_fabrics[ibKey];
+
+                            for (const node of fabric.nodes) {
+                                if (!matchesFilters(node)) continue;
+
+                                filteredStats.total_nodes++;
+                                filteredStats.total_gpus += node.gpu_count;
+                                locStats.total_nodes++;
+                                locStats.total_gpus += node.gpu_count;
+
+                                if (node.is_available) {
+                                    filteredStats.available_nodes++;
+                                    filteredStats.available_gpus += node.gpu_count;
+                                    locStats.available_nodes++;
+                                    locStats.available_gpus += node.gpu_count;
+                                }
+
+                                // Track GPU models
+                                if (!filteredStats.gpu_models[node.gpu_type]) {
+                                    filteredStats.gpu_models[node.gpu_type] = 0;
+                                }
+                                filteredStats.gpu_models[node.gpu_type]++;
+                            }
+                        }
+                    }
+                }
+
+                if (locStats.total_nodes > 0) {
+                    filteredStats.locations[locKey] = locStats;
+                }
+            }
+
+            return filteredStats;
+        }
+
+        // Update global stats display with filtered data
+        function updateFilteredStats(stats) {
+            document.getElementById('totalNodes').textContent = stats.total_nodes.toLocaleString();
+            document.getElementById('totalGPUs').textContent = stats.total_gpus.toLocaleString();
+            document.getElementById('availableNodes').textContent = stats.available_nodes.toLocaleString();
+            document.getElementById('availableGPUs').textContent = stats.available_gpus.toLocaleString();
+
+            const availPercent = stats.total_gpus > 0
+                ? (stats.available_gpus / stats.total_gpus * 100).toFixed(1)
+                : 0;
+            document.getElementById('availablePercent').textContent = availPercent;
+
+            document.getElementById('locationCount').textContent = Object.keys(stats.locations).length;
+            document.getElementById('floorCount').textContent = stats.floors.size;
+            document.getElementById('gpuModelCount').textContent = Object.keys(stats.gpu_models).length;
+        }
+
+        // Render inventory with filters
+        function renderInventory() {
+            const content = document.getElementById('inventoryContent');
+
+            // Force clear and wait for DOM update
+            content.innerHTML = '';
+            content.textContent = ''; // Extra safety
+
+            // Remove all child nodes manually as extra safety
+            while (content.firstChild) {
+                content.removeChild(content.firstChild);
+            }
+
+            // Calculate filtered stats and update display
+            const filteredStats = calculateFilteredStats();
+            updateFilteredStats(filteredStats);
+
+            for (const locKey in inventoryData.locations) {
+                // Apply location filter (case-insensitive substring match)
+                if (currentFilters.location && !locKey.toLowerCase().includes(currentFilters.location)) continue;
+
+                const loc = inventoryData.locations[locKey];
+
+                // Get filtered stats for this location
+                const locFilteredStats = filteredStats.locations[locKey];
+                if (!locFilteredStats) continue; // Skip if no nodes match filters
+
+                // Create location section
+                const locationDiv = document.createElement('div');
+                locationDiv.style.marginBottom = '50px';
+
+                // Location header with filtered stats
+                const locationHeader = document.createElement('div');
+                locationHeader.className = 'datacenter-header';
+                locationHeader.title = `Region: ${loc.region || locKey} | Location Code: ${locKey}`;
+                locationHeader.innerHTML = `
+                    <h2 class="datacenter-title">${loc.name} (${locKey})</h2>
+                    <div class="location-summary">
+                        <div class="summary-stat" title="Total physical nodes in this location (after filters applied)">
+                            <div class="summary-value">${locFilteredStats.total_nodes.toLocaleString()}</div>
+                            <div class="summary-label">Total Nodes</div>
+                        </div>
+                        <div class="summary-stat" title="Total GPU count in this location (after filters applied)">
+                            <div class="summary-value">${locFilteredStats.total_gpus.toLocaleString()}</div>
+                            <div class="summary-label">Total GPUs</div>
+                        </div>
+                        <div class="summary-stat" title="Nodes available for provisioning">
+                            <div class="summary-value">${locFilteredStats.available_nodes.toLocaleString()}</div>
+                            <div class="summary-label">Available Nodes</div>
+                        </div>
+                        <div class="summary-stat" title="GPUs available for provisioning">
+                            <div class="summary-value">${locFilteredStats.available_gpus.toLocaleString()}</div>
+                            <div class="summary-label">Available GPUs</div>
+                        </div>
+                        <div class="summary-stat" title="Number of floors in this datacenter location">
+                            <div class="summary-value">${locFilteredStats.floors}</div>
+                            <div class="summary-label">Floors</div>
+                        </div>
+                    </div>
+                `;
+                locationDiv.appendChild(locationHeader);
+
+                // Render floors
+                for (const floorKey in loc.floors) {
+                    // Apply floor filter (case-insensitive substring match)
+                    if (currentFilters.floor && !floorKey.toLowerCase().includes(currentFilters.floor)) continue;
+
+                    const floor = loc.floors[floorKey];
+                    const floorDiv = renderFloor(locKey, floorKey, floor);
+                    if (floorDiv) locationDiv.appendChild(floorDiv);
+                }
+
+                content.appendChild(locationDiv);
+            }
+        }
+
+        // Render a floor
+        function renderFloor(locationKey, floorKey, floor) {
+            const floorId = `${locationKey}-${floorKey}`;
+
+            // Count filtered nodes
+            let visibleNodes = 0;
+            for (const rackKey in floor.racks) {
+                // Apply rack filter (case-insensitive substring match)
+                if (currentFilters.rack && !rackKey.toLowerCase().includes(currentFilters.rack)) continue;
+
+                const rack = floor.racks[rackKey];
+                for (const ibKey in rack.ib_fabrics) {
+                    // Apply IB Network filter (case-insensitive substring match)
+                    if (currentFilters.ibNetwork && !ibKey.toLowerCase().includes(currentFilters.ibNetwork)) continue;
+
+                    const fabric = rack.ib_fabrics[ibKey];
+                    for (const node of fabric.nodes) {
+                        if (matchesFilters(node)) visibleNodes++;
+                    }
+                }
+            }
+
+            // Skip floor if no visible nodes
+            if (visibleNodes === 0) return null;
+
+            const floorDiv = document.createElement('div');
+            floorDiv.className = 'floor-container';
+
+            const floorHeader = document.createElement('div');
+            floorHeader.id = `floor-header-${floorId}`;
+            floorHeader.className = 'floor-header';
+            floorHeader.title = `Click to expand/collapse floor details | Floor: ${floorKey} in ${locationKey}`;
+            floorHeader.onclick = () => toggleFloor(floorId);
+            floorHeader.innerHTML = `
+                <div class="floor-name">
+                    <span>Floor ${floorKey}</span>
+                    <span class="collapse-icon" id="floor-icon-${floorId}">▼</span>
+                </div>
+                <div class="floor-stats">
+                    <span title="Total physical nodes on this floor">${floor.total_nodes} nodes</span>
+                    <span title="Total GPUs on this floor">${floor.total_gpus} GPUs</span>
+                    <span title="GPUs available for provisioning">${floor.available_gpus} available</span>
+                    <span title="Number of equipment racks on this floor">${Object.keys(floor.racks).length} racks</span>
+                </div>
+            `;
+            floorDiv.appendChild(floorHeader);
+
+            const floorContent = document.createElement('div');
+            floorContent.id = `floor-content-${floorId}`;
+            floorContent.className = 'floor-content';
+
+            // Render IB fabrics
+            const fabricNodes = {};
+            for (const rackKey in floor.racks) {
+                // Apply rack filter (case-insensitive substring match)
+                if (currentFilters.rack && !rackKey.toLowerCase().includes(currentFilters.rack)) continue;
+
+                const rack = floor.racks[rackKey];
+                for (const ibKey in rack.ib_fabrics) {
+                    // Apply IB Network filter (case-insensitive substring match)
+                    if (currentFilters.ibNetwork && !ibKey.toLowerCase().includes(currentFilters.ibNetwork)) continue;
+
+                    if (!fabricNodes[ibKey]) {
+                        fabricNodes[ibKey] = {
+                            id: rack.ib_fabrics[ibKey].id,
+                            nodes: []
+                        };
+                    }
+                    fabricNodes[ibKey].nodes.push(...rack.ib_fabrics[ibKey].nodes);
+                }
+            }
+
+            for (const ibKey in fabricNodes) {
+                const fabricDiv = renderIBFabric(ibKey, fabricNodes[ibKey]);
+                if (fabricDiv) floorContent.appendChild(fabricDiv);
+            }
+
+            floorDiv.appendChild(floorContent);
+            return floorDiv;
+        }
+
+        // Render IB fabric
+        function renderIBFabric(ibKey, fabric) {
+            const filteredNodes = fabric.nodes.filter(matchesFilters);
+            if (filteredNodes.length === 0) return null;
+
+            const fabricDiv = document.createElement('div');
+            fabricDiv.className = 'ib-fabric-section';
+
+            const ibShort = ibKey === 'no-ib' ? 'No IB' : (ibKey.substring(0, 16) + '...');
+            const ibTooltip = ibKey === 'no-ib'
+                ? 'Nodes without InfiniBand networking'
+                : `Full IB Fabric ID: ${ibKey}\n\nInfiniBand provides high-speed, low-latency networking for distributed GPU workloads. Nodes in the same IB fabric can communicate at maximum throughput.`;
+
+            fabricDiv.innerHTML = `
+                <div class="ib-fabric-header" title="${ibTooltip}">
+                    IB Fabric: ${ibShort} (${filteredNodes.length} nodes)
+                </div>
+            `;
+
+            const nodeGrid = document.createElement('div');
+            nodeGrid.className = 'node-grid';
+
+            for (const node of filteredNodes) {
+                const nodeCard = renderNode(node);
+                nodeGrid.appendChild(nodeCard);
+            }
+
+            fabricDiv.appendChild(nodeGrid);
+            return fabricDiv;
+        }
+
+        // Render a node
+        function renderNode(node) {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node-card ${node.is_available ? 'available' : 'unavailable'}`;
+
+            // Build comprehensive tooltip
+            const modeDescription = {
+                'AGENT_MODE_NORMAL': 'Operational and ready for workloads',
+                'AGENT_MODE_SETUP': 'Being provisioned and configured',
+                'AGENT_MODE_NOT_READY': 'Not ready for use',
+                'AGENT_MODE_FREEZE_ENV': 'Environment frozen for troubleshooting',
+                'AGENT_MODE_MAINTENANCE': 'Undergoing scheduled maintenance'
+            };
+
+            const tooltip = [
+                `Node: ${node.name}`,
+                `GPU Type: ${node.gpu_type}`,
+                `GPU Count: ${node.gpu_count}`,
+                `State: ${node.state}`,
+                `Mode: ${node.mode} (${modeDescription[node.mode] || 'Unknown'})`,
+                `Available Slices: ${node.available_slices} of ${node.total_slices}`,
+                `Status: ${node.is_available ? 'Available for provisioning' : 'Currently in use'}`
+            ].join('\n');
+
+            nodeDiv.title = tooltip;
+
+            nodeDiv.innerHTML = `
+                <div class="gpu-type-badge" title="GPU model and memory capacity">${node.gpu_type}</div>
+                <div class="node-name" title="Physical node hostname">${node.name}</div>
+                <div class="node-detail" title="${node.gpu_count} GPUs installed in this node"><strong>GPUs:</strong> ${node.gpu_count}</div>
+                <div class="node-detail" title="Current operational state of the node"><strong>State:</strong> ${node.state}</div>
+                <div class="node-detail" title="${modeDescription[node.mode] || 'Operational mode'}"><strong>Mode:</strong> ${node.mode.replace('AGENT_MODE_', '')}</div>
+                <div class="node-detail">
+                    <span class="node-badge ${node.is_available ? 'badge-available' : 'badge-used'}" title="Number of node slices available for provisioning (each slice represents a portion of the node's resources)">
+                        ${node.available_slices > 0 ? `${node.available_slices} slices avail` : 'Fully used'}
+                    </span>
+                </div>
+            `;
+
+            return nodeDiv;
+        }
+
+        // Check if node matches current filters
+        function matchesFilters(node) {
+            // Vendor filter (case-insensitive substring match)
+            if (currentFilters.vendor) {
+                const nodeVendor = getVendorForGpuType(node.gpu_type).toLowerCase();
+                if (!nodeVendor.includes(currentFilters.vendor)) {
+                    return false;
+                }
+            }
+
+            // GPU type filter (case-insensitive substring match)
+            if (currentFilters.gpuType && !node.gpu_type.toLowerCase().includes(currentFilters.gpuType)) {
+                return false;
+            }
+
+            // Availability filter (substring match)
+            if (currentFilters.availability) {
+                if (currentFilters.availability.includes('avail') && !node.is_available) {
+                    return false;
+                }
+                if (currentFilters.availability.includes('use') && node.is_available) {
+                    return false;
+                }
+            }
+
+            // Mode filter (case-insensitive substring match on AGENT_MODE_*)
+            if (currentFilters.mode && !node.mode.includes(currentFilters.mode)) {
+                return false;
+            }
+
+            // Pod ID filter (case-insensitive substring match)
+            if (currentFilters.podId) {
+                if (!node.pod_id) {
+                    // Node has no pod_id - match if filter is 'none' or 'unassign'
+                    if (!currentFilters.podId.includes('none') && !currentFilters.podId.includes('unassign')) {
+                        return false;
+                    }
+                } else {
+                    // Filter for specific pod_id (substring match)
+                    if (!node.pod_id.toLowerCase().includes(currentFilters.podId)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Refresh dashboard
+        async function refreshDashboard() {
+            const btn = event.target;
+            const progressDiv = document.getElementById('refreshProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressMessage = document.getElementById('progressMessage');
+
+            // Animate button
+            btn.style.transform = 'rotate(360deg)';
+            btn.style.transition = 'transform 0.5s ease';
+            btn.disabled = true;
+
+            // Show progress bar
+            progressDiv.style.display = 'block';
+            progressBar.style.width = '10%';
+            progressMessage.textContent = 'Initiating data refresh...';
+
+            try {
+                // Trigger refresh
+                const response = await fetch('/api/refresh', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to start refresh');
+                }
+
+                // Poll for progress
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const statusResponse = await fetch('/api/refresh/status');
+                        const status = await statusResponse.json();
+
+                        progressBar.style.width = status.progress + '%';
+                        progressMessage.textContent = status.message;
+
+                        if (status.error) {
+                            clearInterval(pollInterval);
+                            progressMessage.style.color = '#ff6b6b';
+                            progressMessage.textContent = 'Error: ' + status.error;
+                            setTimeout(() => {
+                                progressDiv.style.display = 'none';
+                                btn.disabled = false;
+                            }, 3000);
+                        } else if (!status.in_progress && status.progress === 100) {
+                            clearInterval(pollInterval);
+                            progressMessage.textContent = 'Refresh complete! Updating dashboard...';
+                            setTimeout(async () => {
+                                // Dynamically reload data without full page refresh
+                                await loadInventory();
+                                progressDiv.style.display = 'none';
+                                btn.disabled = false;
+                                btn.style.transform = 'rotate(0deg)';
+                            }, 500);
+                        }
+                    } catch (error) {
+                        console.error('Error polling status:', error);
+                    }
+                }, 500);
+
+            } catch (error) {
+                console.error('Error triggering refresh:', error);
+                progressMessage.style.color = '#ff6b6b';
+                progressMessage.textContent = 'Error: Failed to connect to server';
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    btn.disabled = false;
+                    btn.style.transform = 'rotate(0deg)';
+                }, 3000);
+            }
+        }
+
+        // Scroll to top
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Sticky tabs and back to top button
+        window.addEventListener('scroll', () => {
+            const tabs = document.getElementById('mainTabs');
+            const placeholder = document.getElementById('tabsPlaceholder');
+            const backToTop = document.getElementById('backToTop');
+
+            if (window.scrollY > 300) {
+                tabs.classList.add('sticky');
+                placeholder.classList.add('active');
+                backToTop.classList.add('visible');
+            } else {
+                tabs.classList.remove('sticky');
+                placeholder.classList.remove('active');
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        // Load inventory on page load
+        window.addEventListener('load', loadInventory);
+    </script>
+</body>
+</html>

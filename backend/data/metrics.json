@@ -1,15 +1,15 @@
 {
-  "last_updated": "2026-01-22T19:39:13.394288Z",
+  "last_updated": "2026-01-23T00:00:57.134585Z",
   "global_summary": {
-    "total_nodes": 216,
-    "total_gpus": 1077,
-    "monthly_revenue": 1065600,
+    "total_nodes": 217,
+    "total_gpus": 1081,
+    "monthly_revenue": 1069600,
     "available_nodes": 168
   },
   "vendors": {
     "nvidia": {
-      "gpus": 1029,
-      "percentage": 95.5
+      "gpus": 1033,
+      "percentage": 95.6
     },
     "amd": {
       "gpus": 0,
@@ -19,69 +19,69 @@
   "regions": {
     "iceland": {
       "name": "eu-iceland1-a",
-      "nodes": 181,
-      "gpus": 788,
-      "monthly_revenue": 1182000
-    },
-    "dallas": {
-      "name": "us-southcentral1-a",
-      "nodes": 14,
-      "gpus": 123,
-      "monthly_revenue": 184500
+      "nodes": 182,
+      "gpus": 792,
+      "monthly_revenue": 1188000
     },
     "virginia": {
       "name": "us-east1-a",
       "nodes": 21,
       "gpus": 166,
       "monthly_revenue": 249000
+    },
+    "dallas": {
+      "name": "us-southcentral1-a",
+      "nodes": 14,
+      "gpus": 123,
+      "monthly_revenue": 184500
     }
   },
   "gpu_models": {
-    "GB200-NVL-186GB": {
-      "gpus": 660,
-      "percentage": 61
-    },
     "H100-SXM-80GB": {
       "gpus": 112,
       "percentage": 10
-    },
-    "L40S-48GB": {
-      "gpus": 137,
-      "percentage": 13
     },
     "H200-SXM-141GB": {
       "gpus": 72,
       "percentage": 7
     },
-    "B200-SXM-180GB": {
-      "gpus": 16,
-      "percentage": 1
-    },
-    "MI300X-192GB": {
-      "gpus": 48,
-      "percentage": 4
+    "GB200-NVL-186GB": {
+      "gpus": 664,
+      "percentage": 61
     },
     "A100-SXM-80GB": {
       "gpus": 32,
       "percentage": 3
+    },
+    "B200-SXM-180GB": {
+      "gpus": 16,
+      "percentage": 1
+    },
+    "L40S-48GB": {
+      "gpus": 137,
+      "percentage": 13
+    },
+    "MI300X-192GB": {
+      "gpus": 48,
+      "percentage": 4
     }
   },
   "states": {
     "STATE_RUNNING": 168,
-    "STATE_SHUTOFF": 48
+    "STATE_SHUTOFF": 49
   },
   "raw_location_data": {
     "eu-iceland1-a": {
-      "nodes": 181,
-      "gpus": 788
-    },
-    "us-southcentral1-a": {
-      "nodes": 14,
-      "gpus": 123
+      "nodes": 182,
+      "gpus": 792
     },
     "us-east1-a": {
       "nodes": 21,
       "gpus": 166
+    },
+    "us-southcentral1-a": {
+      "nodes": 14,
+      "gpus": 123
     }
   }
 }
