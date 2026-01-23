@@ -635,9 +635,10 @@
                 <select id="availabilityFilter" class="filter-select" onchange="applyFilters()">
                     <option value="">All Nodes</option>
                     <option value="available">Available Only</option>
-                    <option value="spare">Spare Only (Unreserved)</option>
-                    <option value="reserved">Reserved Only</option>
                     <option value="used">Used Only</option>
+                    <option value="spare">Spare Only (Available & Unreserved)</option>
+                    <option value="reserved-y">Reserved (Y)</option>
+                    <option value="reserved-n">Unreserved (N)</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -709,9 +710,9 @@
                         Hi! I can help you query datacenter capacity. Try asking:
                         <ul style="margin: 10px 0; padding-left: 20px;">
                             <li>"How many H100 GPUs are available in Iceland?"</li>
-                            <li>"Show me all L40S nodes"</li>
-                            <li>"What's the total capacity?"</li>
-                            <li>"Which location has the most GPUs?"</li>
+                            <li>"Show me reserved H100 nodes in Dallas"</li>
+                            <li>"How many unreserved L40S GPUs?"</li>
+                            <li>"What's the total spare capacity?"</li>
                         </ul>
                     </div>
                 </div>
@@ -1399,13 +1400,16 @@
                 if (currentFilters.availability === 'available' && !node.is_available) {
                     return false;
                 }
+                if (currentFilters.availability === 'used' && node.is_available) {
+                    return false;
+                }
                 if (currentFilters.availability === 'spare' && !node.is_spare) {
                     return false;
                 }
-                if (currentFilters.availability === 'reserved' && (!node.is_reserved || !node.is_available)) {
+                if (currentFilters.availability === 'reserved-y' && !node.is_reserved) {
                     return false;
                 }
-                if (currentFilters.availability === 'used' && node.is_available) {
+                if (currentFilters.availability === 'reserved-n' && node.is_reserved) {
                     return false;
                 }
             }
@@ -1585,9 +1589,9 @@
                         Hi! I can help you query datacenter capacity. Try asking:
                         <ul style="margin: 10px 0; padding-left: 20px;">
                             <li>"How many H100 GPUs are available in Iceland?"</li>
-                            <li>"Show me all L40S nodes"</li>
-                            <li>"What's the total capacity?"</li>
-                            <li>"Which location has the most GPUs?"</li>
+                            <li>"Show me reserved H100 nodes in Dallas"</li>
+                            <li>"How many unreserved L40S GPUs?"</li>
+                            <li>"What's the total spare capacity?"</li>
                         </ul>
                     </div>
                 </div>
@@ -1636,6 +1640,9 @@
                 gpuModel: /(h100|h200|l40s|gb200|b200|a100|mi300x)/i,
                 location: /(iceland|virginia|dallas|us west|icat|vaeq|txdr|nvrm)/i,
                 available: /(?:available|free|unused)/i,
+                reserved: /\breserved\b/i,
+                unreserved: /\bunreserved\b/i,
+                spare: /\bspare\b/i,
                 count: /(?:how many|count|number of)/i,
                 mostGpus: /(?:most|highest|maximum).*(gpus?|capacity)/i,
                 floor: /floor\s*([a-z0-9]+)/i,
@@ -1676,7 +1683,13 @@
             // GPU model + location query (with context fallback)
             let gpuMatch = queryLower.match(patterns.gpuModel);
             let locationMatch = queryLower.match(patterns.location);
-            const isAvailable = patterns.available.test(queryLower);
+
+            // Determine availability filter
+            let availabilityFilter = null;
+            if (patterns.available.test(queryLower)) availabilityFilter = 'available';
+            if (patterns.spare.test(queryLower)) availabilityFilter = 'spare';
+            if (patterns.reserved.test(queryLower)) availabilityFilter = 'reserved';
+            if (patterns.unreserved.test(queryLower)) availabilityFilter = 'unreserved';
 
             // Use context if location/GPU not specified
             if (!locationMatch && context.lastLocation && patterns.count.test(queryLower)) {
@@ -1688,7 +1701,7 @@
 
             if (gpuMatch) {
                 const gpuType = gpuMatch[1].toUpperCase();
-                let result = findGPUsByType(gpuType, locationMatch ? locationMatch[1] : null, isAvailable);
+                let result = findGPUsByType(gpuType, locationMatch ? locationMatch[1] : null, availabilityFilter);
                 return result;
             }
 
@@ -1730,7 +1743,7 @@
                 • "How many available nodes in Virginia?"`;
         }
 
-        function findGPUsByType(gpuType, location, availableOnly) {
+        function findGPUsByType(gpuType, location, availabilityFilter) {
             const gpuTypeMap = {
                 'H100': 'H100-SXM-80GB',
                 'H200': 'H200-SXM-141GB',
@@ -1747,6 +1760,16 @@
             if (!stats) {
                 return `GPU type <strong>${gpuType}</strong> not found in inventory.`;
             }
+
+            // Helper function to check if node matches availability filter
+            const matchesFilter = (node) => {
+                if (!availabilityFilter) return true;
+                if (availabilityFilter === 'available') return node.is_available;
+                if (availabilityFilter === 'spare') return node.is_spare;
+                if (availabilityFilter === 'reserved') return node.is_reserved;
+                if (availabilityFilter === 'unreserved') return !node.is_reserved;
+                return true;
+            };
 
             if (location) {
                 // Find location-specific count
@@ -1765,10 +1788,8 @@
                                 for (const ibKey in rack.ib_fabrics) {
                                     const fabric = rack.ib_fabrics[ibKey];
                                     for (const node of fabric.nodes) {
-                                        if (node.gpu_type === fullGpuType) {
-                                            if (!availableOnly || node.is_available) {
-                                                locCount += node.num_gpus;
-                                            }
+                                        if (node.gpu_type === fullGpuType && matchesFilter(node)) {
+                                            locCount += node.num_gpus;
                                         }
                                     }
                                 }
@@ -1779,15 +1800,20 @@
                 }
 
                 if (locName) {
+                    const filterLabel = availabilityFilter ? ` (${availabilityFilter})` : '';
                     return `<strong>${fullGpuType}</strong> in <strong>${locName}</strong>:<br>
-                        • ${locCount.toLocaleString()} GPUs ${availableOnly ? '(available)' : ''}`;
+                        • ${locCount.toLocaleString()} GPUs${filterLabel}`;
                 }
             }
 
-            const count = availableOnly ? stats.available : stats.total;
+            const filterLabel = availabilityFilter === 'available' ? 'available' :
+                               availabilityFilter === 'spare' ? 'spare' :
+                               availabilityFilter === 'reserved' ? 'reserved' :
+                               availabilityFilter === 'unreserved' ? 'unreserved' : '';
+
             return `<strong>${fullGpuType}</strong> globally:<br>
                 • <strong>${stats.total.toLocaleString()}</strong> total GPUs<br>
-                • <strong>${stats.available.toLocaleString()}</strong> available GPUs`;
+                • <strong>${stats.available.toLocaleString()}</strong> available GPUs${stats.spare ? `<br>• <strong>${stats.spare.toLocaleString()}</strong> spare GPUs` : ''}`;
         }
 
         function getLocationInfo(location, availableOnly) {
@@ -1820,7 +1846,10 @@
 
             const locationPattern = /(iceland|virginia|dallas|us west|icat|vaeq|txdr|nvrm)/i;
             const gpuPattern = /(h100|h200|l40s|gb200|b200|a100|mi300x)/i;
-            const availablePattern = /(?:available|free|unused)/i;
+            const availablePattern = /\bavailable\b|\bfree\b|\bunused\b/i;
+            const reservedPattern = /\breserved\b/i;
+            const unreservedPattern = /\bunreserved\b/i;
+            const sparePattern = /\bspare\b/i;
 
             // Extract context from recent messages (most recent first)
             for (let i = recentUserMessages.length - 1; i >= 0; i--) {
@@ -1837,7 +1866,13 @@
                 }
 
                 if (!context.lastAvailabilityFilter) {
-                    if (availablePattern.test(msg)) {
+                    if (sparePattern.test(msg)) {
+                        context.lastAvailabilityFilter = 'spare';
+                    } else if (reservedPattern.test(msg)) {
+                        context.lastAvailabilityFilter = 'reserved';
+                    } else if (unreservedPattern.test(msg)) {
+                        context.lastAvailabilityFilter = 'unreserved';
+                    } else if (availablePattern.test(msg)) {
                         context.lastAvailabilityFilter = 'available';
                     }
                 }
