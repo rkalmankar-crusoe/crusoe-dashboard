@@ -565,10 +565,10 @@
                 <div class="capacity-value" id="availableNodes">-</div>
                 <div class="capacity-subtitle"><span id="availableGPUs">-</span> GPUs (<span id="availablePercent">-</span>%)</div>
             </div>
-            <div class="capacity-card" style="border-color: rgba(33, 150, 243, 0.5); background: rgba(33, 150, 243, 0.1);" title="Unreserved nodes available for immediate provisioning (not allocated to any customer)">
-                <div class="capacity-title">Spare Capacity</div>
-                <div class="capacity-value" id="spareNodes">-</div>
-                <div class="capacity-subtitle"><span id="spareGPUs">-</span> GPUs (<span id="sparePercent">-</span>%)</div>
+            <div class="capacity-card" style="border-color: rgba(255, 152, 0, 0.5); background: rgba(255, 152, 0, 0.1);" title="Hot spare nodes: powered on, configured, and ready for immediate deployment">
+                <div class="capacity-title">Hot Spare Capacity</div>
+                <div class="capacity-value" id="hotSpareNodes">-</div>
+                <div class="capacity-subtitle"><span id="hotSpareGPUs">-</span> GPUs (<span id="hotSparePercent">-</span>%)</div>
             </div>
             <div class="capacity-card" title="Number of datacenter locations and floors (updates based on filters)">
                 <div class="capacity-title">Locations</div>
@@ -816,11 +816,11 @@
             const availPercent = (stats.available_gpus / stats.total_gpus * 100).toFixed(1);
             document.getElementById('availablePercent').textContent = availPercent;
 
-            document.getElementById('spareNodes').textContent = (stats.spare_nodes || 0).toLocaleString();
-            document.getElementById('spareGPUs').textContent = (stats.spare_gpus || 0).toLocaleString();
+            document.getElementById('hotSpareNodes').textContent = (stats.hot_spare_nodes || 0).toLocaleString();
+            document.getElementById('hotSpareGPUs').textContent = (stats.hot_spare_gpus || 0).toLocaleString();
 
-            const sparePercent = stats.total_gpus > 0 ? (stats.spare_gpus / stats.total_gpus * 100).toFixed(1) : '0.0';
-            document.getElementById('sparePercent').textContent = sparePercent;
+            const hotSparePercent = stats.total_gpus > 0 ? (stats.hot_spare_gpus / stats.total_gpus * 100).toFixed(1) : '0.0';
+            document.getElementById('hotSparePercent').textContent = hotSparePercent;
 
             document.getElementById('locationCount').textContent = Object.keys(inventoryData.locations).length;
 
@@ -1045,6 +1045,8 @@
                 available_gpus: 0,
                 spare_nodes: 0,
                 spare_gpus: 0,
+                hot_spare_nodes: 0,
+                hot_spare_gpus: 0,
                 locations: {},
                 gpu_models: {},
                 floors: new Set()
@@ -1063,6 +1065,8 @@
                     available_gpus: 0,
                     spare_nodes: 0,
                     spare_gpus: 0,
+                    hot_spare_nodes: 0,
+                    hot_spare_gpus: 0,
                     floors: 0
                 };
 
@@ -1106,6 +1110,13 @@
                                     locStats.spare_gpus += node.gpu_count;
                                 }
 
+                                if (node.is_hot_spare) {
+                                    filteredStats.hot_spare_nodes++;
+                                    filteredStats.hot_spare_gpus += node.gpu_count;
+                                    locStats.hot_spare_nodes++;
+                                    locStats.hot_spare_gpus += node.gpu_count;
+                                }
+
                                 // Track GPU models
                                 if (!filteredStats.gpu_models[node.gpu_type]) {
                                     filteredStats.gpu_models[node.gpu_type] = 0;
@@ -1136,13 +1147,13 @@
                 : 0;
             document.getElementById('availablePercent').textContent = availPercent;
 
-            document.getElementById('spareNodes').textContent = (stats.spare_nodes || 0).toLocaleString();
-            document.getElementById('spareGPUs').textContent = (stats.spare_gpus || 0).toLocaleString();
+            document.getElementById('hotSpareNodes').textContent = (stats.hot_spare_nodes || 0).toLocaleString();
+            document.getElementById('hotSpareGPUs').textContent = (stats.hot_spare_gpus || 0).toLocaleString();
 
-            const sparePercent = stats.total_gpus > 0
-                ? (stats.spare_gpus / stats.total_gpus * 100).toFixed(1)
+            const hotSparePercent = stats.total_gpus > 0
+                ? (stats.hot_spare_gpus / stats.total_gpus * 100).toFixed(1)
                 : 0;
-            document.getElementById('sparePercent').textContent = sparePercent;
+            document.getElementById('hotSparePercent').textContent = hotSparePercent;
 
             document.getElementById('locationCount').textContent = Object.keys(stats.locations).length;
             document.getElementById('floorCount').textContent = stats.floors.size;
