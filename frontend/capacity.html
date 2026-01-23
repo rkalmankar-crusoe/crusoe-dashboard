@@ -637,6 +637,7 @@
                     <option value="available">Available Only</option>
                     <option value="used">Used Only</option>
                     <option value="spare">Spare Only (Available & Unreserved)</option>
+                    <option value="hot-spare">Hot Spare Only</option>
                     <option value="reserved-y">Reserved (Y)</option>
                     <option value="reserved-n">Unreserved (N)</option>
                 </select>
@@ -710,7 +711,7 @@
                         Hi! I can help you query datacenter capacity. Try asking:
                         <ul style="margin: 10px 0; padding-left: 20px;">
                             <li>"How many H100 GPUs are available in Iceland?"</li>
-                            <li>"Show me reserved H100 nodes in Dallas"</li>
+                            <li>"Show me hot spare H200 nodes in Dallas"</li>
                             <li>"How many unreserved L40S GPUs?"</li>
                             <li>"What's the total spare capacity?"</li>
                         </ul>
@@ -1406,6 +1407,9 @@
                 if (currentFilters.availability === 'spare' && !node.is_spare) {
                     return false;
                 }
+                if (currentFilters.availability === 'hot-spare' && !node.is_hot_spare) {
+                    return false;
+                }
                 if (currentFilters.availability === 'reserved-y' && !node.is_reserved) {
                     return false;
                 }
@@ -1589,7 +1593,7 @@
                         Hi! I can help you query datacenter capacity. Try asking:
                         <ul style="margin: 10px 0; padding-left: 20px;">
                             <li>"How many H100 GPUs are available in Iceland?"</li>
-                            <li>"Show me reserved H100 nodes in Dallas"</li>
+                            <li>"Show me hot spare H200 nodes in Dallas"</li>
                             <li>"How many unreserved L40S GPUs?"</li>
                             <li>"What's the total spare capacity?"</li>
                         </ul>
@@ -1642,6 +1646,7 @@
                 available: /(?:available|free|unused)/i,
                 reserved: /\breserved\b/i,
                 unreserved: /\bunreserved\b/i,
+                hotSpare: /\bhot[- ]?spare\b/i,
                 spare: /\bspare\b/i,
                 count: /(?:how many|count|number of)/i,
                 mostGpus: /(?:most|highest|maximum).*(gpus?|capacity)/i,
@@ -1684,10 +1689,11 @@
             let gpuMatch = queryLower.match(patterns.gpuModel);
             let locationMatch = queryLower.match(patterns.location);
 
-            // Determine availability filter
+            // Determine availability filter (check hot spare before spare since hot spare contains "spare")
             let availabilityFilter = null;
             if (patterns.available.test(queryLower)) availabilityFilter = 'available';
-            if (patterns.spare.test(queryLower)) availabilityFilter = 'spare';
+            if (patterns.hotSpare.test(queryLower)) availabilityFilter = 'hot-spare';
+            else if (patterns.spare.test(queryLower)) availabilityFilter = 'spare';
             if (patterns.reserved.test(queryLower)) availabilityFilter = 'reserved';
             if (patterns.unreserved.test(queryLower)) availabilityFilter = 'unreserved';
 
@@ -1766,6 +1772,7 @@
                 if (!availabilityFilter) return true;
                 if (availabilityFilter === 'available') return node.is_available;
                 if (availabilityFilter === 'spare') return node.is_spare;
+                if (availabilityFilter === 'hot-spare') return node.is_hot_spare;
                 if (availabilityFilter === 'reserved') return node.is_reserved;
                 if (availabilityFilter === 'unreserved') return !node.is_reserved;
                 return true;
@@ -1849,6 +1856,7 @@
             const availablePattern = /\bavailable\b|\bfree\b|\bunused\b/i;
             const reservedPattern = /\breserved\b/i;
             const unreservedPattern = /\bunreserved\b/i;
+            const hotSparePattern = /\bhot[- ]?spare\b/i;
             const sparePattern = /\bspare\b/i;
 
             // Extract context from recent messages (most recent first)
@@ -1866,7 +1874,10 @@
                 }
 
                 if (!context.lastAvailabilityFilter) {
-                    if (sparePattern.test(msg)) {
+                    // Check hot spare first since it contains "spare"
+                    if (hotSparePattern.test(msg)) {
+                        context.lastAvailabilityFilter = 'hot-spare';
+                    } else if (sparePattern.test(msg)) {
                         context.lastAvailabilityFilter = 'spare';
                     } else if (reservedPattern.test(msg)) {
                         context.lastAvailabilityFilter = 'reserved';

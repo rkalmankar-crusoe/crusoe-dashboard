@@ -172,6 +172,8 @@ def process_inventory():
         "available_gpus": 0,
         "spare_nodes": 0,
         "spare_gpus": 0,
+        "hot_spare_nodes": 0,
+        "hot_spare_gpus": 0,
         "floors": defaultdict(lambda: {
             "name": "",
             "total_nodes": 0,
@@ -180,6 +182,8 @@ def process_inventory():
             "available_gpus": 0,
             "spare_nodes": 0,
             "spare_gpus": 0,
+            "hot_spare_nodes": 0,
+            "hot_spare_gpus": 0,
             "racks": defaultdict(lambda: {
                 "name": "",
                 "total_nodes": 0,
@@ -188,6 +192,8 @@ def process_inventory():
                 "available_gpus": 0,
                 "spare_nodes": 0,
                 "spare_gpus": 0,
+                "hot_spare_nodes": 0,
+                "hot_spare_gpus": 0,
                 "ib_fabrics": defaultdict(lambda: {
                     "id": "",
                     "nodes": []
@@ -204,8 +210,10 @@ def process_inventory():
         "available_gpus": 0,
         "spare_nodes": 0,
         "spare_gpus": 0,
-        "gpu_models": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0}),
-        "vendors": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0}),
+        "hot_spare_nodes": 0,
+        "hot_spare_gpus": 0,
+        "gpu_models": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0, "hot_spare": 0}),
+        "vendors": defaultdict(lambda: {"total": 0, "available": 0, "spare": 0, "hot_spare": 0}),
     }
 
     print("→ Processing nodes...")
@@ -241,6 +249,10 @@ def process_inventory():
         is_reserved = node.get("reserved", "N") == "Y"
         is_spare = is_available and not is_reserved
 
+        # Check if node is hot spare (note field contains "hot spare")
+        note = node.get("note", "").lower()
+        is_hot_spare = "hot spare" in note or "hot-spare" in note
+
         # Node details
         node_detail = {
             "id": node["id"],
@@ -256,6 +268,8 @@ def process_inventory():
             "is_available": is_available,
             "is_reserved": is_reserved,
             "is_spare": is_spare,
+            "is_hot_spare": is_hot_spare,
+            "note": node.get("note", ""),
             "ib_network_id": ib_network_id,
             "pod_id": node.get("pod_id", ""),
         }
@@ -288,6 +302,9 @@ def process_inventory():
         if is_spare:
             rack_data["spare_nodes"] += 1
             rack_data["spare_gpus"] += gpus
+        if is_hot_spare:
+            rack_data["hot_spare_nodes"] += 1
+            rack_data["hot_spare_gpus"] += gpus
 
         # Floor level
         floor_data["total_nodes"] += 1
@@ -298,6 +315,9 @@ def process_inventory():
         if is_spare:
             floor_data["spare_nodes"] += 1
             floor_data["spare_gpus"] += gpus
+        if is_hot_spare:
+            floor_data["hot_spare_nodes"] += 1
+            floor_data["hot_spare_gpus"] += gpus
 
         # Location level
         loc_data["total_nodes"] += 1
@@ -308,6 +328,9 @@ def process_inventory():
         if is_spare:
             loc_data["spare_nodes"] += 1
             loc_data["spare_gpus"] += gpus
+        if is_hot_spare:
+            loc_data["hot_spare_nodes"] += 1
+            loc_data["hot_spare_gpus"] += gpus
 
         # Global level
         global_stats["total_nodes"] += 1
@@ -318,6 +341,9 @@ def process_inventory():
         if is_spare:
             global_stats["spare_nodes"] += 1
             global_stats["spare_gpus"] += gpus
+        if is_hot_spare:
+            global_stats["hot_spare_nodes"] += 1
+            global_stats["hot_spare_gpus"] += gpus
 
         # GPU model stats
         global_stats["gpu_models"][gpu_info["name"]]["total"] += gpus
@@ -325,6 +351,8 @@ def process_inventory():
             global_stats["gpu_models"][gpu_info["name"]]["available"] += gpus
         if is_spare:
             global_stats["gpu_models"][gpu_info["name"]]["spare"] += gpus
+        if is_hot_spare:
+            global_stats["gpu_models"][gpu_info["name"]]["hot_spare"] += gpus
 
         # Vendor stats
         global_stats["vendors"][gpu_info["vendor"]]["total"] += gpus
@@ -332,10 +360,13 @@ def process_inventory():
             global_stats["vendors"][gpu_info["vendor"]]["available"] += gpus
         if is_spare:
             global_stats["vendors"][gpu_info["vendor"]]["spare"] += gpus
+        if is_hot_spare:
+            global_stats["vendors"][gpu_info["vendor"]]["hot_spare"] += gpus
 
     print(f"✓ Processed {global_stats['total_nodes']} nodes with {global_stats['total_gpus']} GPUs")
     print(f"  Available: {global_stats['available_nodes']} nodes, {global_stats['available_gpus']} GPUs")
-    print(f"  Spare (Unreserved): {global_stats['spare_nodes']} nodes, {global_stats['spare_gpus']} GPUs\n")
+    print(f"  Spare (Unreserved): {global_stats['spare_nodes']} nodes, {global_stats['spare_gpus']} GPUs")
+    print(f"  Hot Spare: {global_stats['hot_spare_nodes']} nodes, {global_stats['hot_spare_gpus']} GPUs\n")
 
     # Convert defaultdicts to regular dicts for JSON serialization
     def convert_to_dict(obj):
