@@ -545,8 +545,14 @@
                 </div>
             </div>
             <div class="subtitle">Physical Datacenter Capacity Dashboard</div>
-            <div id="lastUpdated" style="color: #888; font-size: 0.9em; margin-top: 15px;">
-                Last updated: <span id="updateTime">Loading...</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                <div id="authInfo" style="color: #888; font-size: 0.85em;">
+                    <span id="userEmail" style="color: #64B5F6;">Loading...</span>
+                    <span id="tokenAge" style="margin-left: 15px; color: #999;">Token: Loading...</span>
+                </div>
+                <div id="lastUpdated" style="color: #888; font-size: 0.9em;">
+                    Last updated: <span id="updateTime">Loading...</span>
+                </div>
             </div>
 
             <!-- Refresh Progress Bar -->
@@ -754,6 +760,36 @@
         let conversationHistory = [];
 
         // Load inventory data
+        async function loadAuthInfo() {
+            try {
+                const response = await fetch('/api/auth/info');
+                if (response.ok) {
+                    const authData = await response.json();
+
+                    // Display user email
+                    document.getElementById('userEmail').textContent = `👤 ${authData.user_email}`;
+
+                    // Display token age with color coding
+                    const tokenAge = authData.token_age_seconds;
+                    const tokenAgeSpan = document.getElementById('tokenAge');
+
+                    if (tokenAge > 86400) { // > 24 hours
+                        tokenAgeSpan.style.color = '#FFB74D'; // Orange warning
+                        tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age} ⚠️`;
+                        tokenAgeSpan.title = 'Token is old - consider refreshing authentication';
+                    } else {
+                        tokenAgeSpan.style.color = '#90EE90'; // Green
+                        tokenAgeSpan.textContent = `🔐 Token: ${authData.token_age}`;
+                        tokenAgeSpan.title = `Token issued: ${new Date(authData.token_issued_at).toLocaleString()}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading auth info:', error);
+                document.getElementById('userEmail').textContent = '👤 Unknown';
+                document.getElementById('tokenAge').textContent = '🔐 Token: Unknown';
+            }
+        }
+
         async function loadInventory() {
             try {
                 // Try API endpoint first, fall back to static file
@@ -1909,8 +1945,11 @@
             return context;
         }
 
-        // Load inventory on page load
-        window.addEventListener('load', loadInventory);
+        // Load inventory and auth info on page load
+        window.addEventListener('load', () => {
+            loadAuthInfo();
+            loadInventory();
+        });
     </script>
 </body>
 </html>

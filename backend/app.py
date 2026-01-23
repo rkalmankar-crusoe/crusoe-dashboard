@@ -13,9 +13,11 @@ from flask_cors import CORS
 import subprocess
 import json
 import os
+import base64
 from pathlib import Path
 import threading
 import time
+from datetime import datetime
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
@@ -160,6 +162,74 @@ def get_metrics():
         return jsonify({"error": "Metrics data not found"}), 404
 
 
+@app.route('/api/auth/info', methods=['GET'])
+def get_auth_info():
+    """Get authentication information (user and token details)."""
+    try:
+        # Read JWT token
+        token_file = Path.home() / ".crusoe" / "admin-token-prod"
+        with open(token_file, 'r') as f:
+            token = f.read().strip()
+
+        # Decode JWT payload (without signature verification)
+        parts = token.split('.')
+        if len(parts) >= 2:
+            payload = parts[1]
+            # Add padding if needed
+            padding = 4 - len(payload) % 4
+            if padding != 4:
+                payload += '=' * padding
+
+            decoded = base64.urlsafe_b64decode(payload)
+            token_data = json.loads(decoded)
+
+            # Get user email from git config
+            try:
+                result = subprocess.run(
+                    ['git', 'config', 'user.email'],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                user_email = result.stdout.strip() if result.returncode == 0 else os.getenv('USER', 'unknown')
+            except Exception:
+                user_email = os.getenv('USER', 'unknown')
+
+            # Extract token info
+            issued_at = token_data.get('iat', 0)
+            issued_datetime = datetime.fromtimestamp(issued_at) if issued_at > 0 else None
+
+            # Calculate token age
+            if issued_datetime:
+                age_seconds = (datetime.now() - issued_datetime).total_seconds()
+                age_hours = int(age_seconds / 3600)
+                age_days = int(age_hours / 24)
+
+                if age_days > 0:
+                    age_display = f"{age_days} day{'s' if age_days != 1 else ''} ago"
+                elif age_hours > 0:
+                    age_display = f"{age_hours} hour{'s' if age_hours != 1 else ''} ago"
+                else:
+                    age_display = "< 1 hour ago"
+            else:
+                age_display = "unknown"
+
+            return jsonify({
+                "user_email": user_email,
+                "token_issued_at": issued_datetime.isoformat() if issued_datetime else None,
+                "token_age": age_display,
+                "token_age_seconds": int(age_seconds) if issued_datetime else None,
+                "okta_subject": token_data.get('sub', 'unknown')
+            })
+        else:
+            return jsonify({"error": "Invalid token format"}), 500
+
+    except FileNotFoundError:
+        return jsonify({"error": "Token file not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     import sys
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
@@ -176,6 +246,7 @@ if __name__ == '__main__':
     print("  - GET /api/refresh/status - Get refresh status")
     print("  - GET /api/data/inventory - Get inventory data")
     print("  - GET /api/data/metrics - Get metrics data")
+    print("  - GET /api/auth/info - Get authentication info")
     print("\n" + "=" * 60 + "\n")
 
     app.run(debug=True, host='0.0.0.0', port=port)
