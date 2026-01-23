@@ -8,7 +8,7 @@ for refreshing datacenter inventory data.
 IMPORTANT: Only performs READ operations via CLI tools.
 """
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, session, request
 from flask_cors import CORS
 import subprocess
 import json
@@ -18,9 +18,11 @@ from pathlib import Path
 import threading
 import time
 from datetime import datetime
+import secrets
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
-CORS(app)
+app.secret_key = secrets.token_hex(32)  # Generate random secret key for sessions
+CORS(app, supports_credentials=True)
 
 # Configuration
 BASE_DIR = Path(__file__).parent
@@ -35,6 +37,54 @@ refresh_status = {
     "error": None,
     "last_updated": None
 }
+
+# Session management helpers
+def get_token_file():
+    """Get the path to the admin token file."""
+    return Path.home() / ".crusoe" / "admin-token-prod"
+
+def validate_token():
+    """Check if a valid token exists."""
+    token_file = get_token_file()
+    if not token_file.exists():
+        return False, "Token file not found"
+
+    try:
+        with open(token_file, 'r') as f:
+            token = f.read().strip()
+
+        # Decode JWT payload to verify it's valid
+        parts = token.split('.')
+        if len(parts) < 2:
+            return False, "Invalid token format"
+
+        payload = parts[1]
+        padding = 4 - len(payload) % 4
+        if padding != 4:
+            payload += '=' * padding
+
+        decoded = base64.urlsafe_b64decode(payload)
+        token_data = json.loads(decoded)
+
+        # Check if token has expired (if exp field exists)
+        if 'exp' in token_data:
+            exp_time = datetime.fromtimestamp(token_data['exp'])
+            if datetime.now() > exp_time:
+                return False, "Token has expired"
+
+        return True, token_data
+    except Exception as e:
+        return False, f"Token validation failed: {str(e)}"
+
+def require_session(f):
+    """Decorator to require valid session for endpoints."""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            return jsonify({"error": "Not authenticated"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 def run_refresh_task():
     """Background task to refresh datacenter inventory."""
@@ -110,7 +160,73 @@ def serve_static(path):
     return send_from_directory(str(FRONTEND_DIR), path)
 
 
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """Login endpoint - creates a session if valid token exists."""
+    valid, result = validate_token()
+
+    if not valid:
+        return jsonify({
+            "success": False,
+            "error": result
+        }), 401
+
+    # Create session
+    session['authenticated'] = True
+    session['user_data'] = result
+    session.permanent = True
+
+    # Get user email
+    try:
+        email_result = subprocess.run(
+            ['git', 'config', 'user.email'],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        user_email = email_result.stdout.strip() if email_result.returncode == 0 else os.getenv('USER', 'unknown')
+    except Exception:
+        user_email = os.getenv('USER', 'unknown')
+
+    return jsonify({
+        "success": True,
+        "user_email": user_email
+    })
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout():
+    """Logout endpoint - clears the session."""
+    session.clear()
+    return jsonify({"success": True, "message": "Logged out successfully"})
+
+
+@app.route('/api/auth/status', methods=['GET'])
+def auth_status():
+    """Check if user is authenticated."""
+    authenticated = session.get('authenticated', False)
+    if authenticated:
+        try:
+            email_result = subprocess.run(
+                ['git', 'config', 'user.email'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            user_email = email_result.stdout.strip() if email_result.returncode == 0 else os.getenv('USER', 'unknown')
+        except Exception:
+            user_email = os.getenv('USER', 'unknown')
+
+        return jsonify({
+            "authenticated": True,
+            "user_email": user_email
+        })
+    else:
+        return jsonify({"authenticated": False})
+
+
 @app.route('/api/refresh', methods=['POST'])
+@require_session
 def trigger_refresh():
     """Trigger a data refresh."""
     global refresh_status
@@ -139,6 +255,7 @@ def get_refresh_status():
 
 
 @app.route('/api/data/inventory', methods=['GET'])
+@require_session
 def get_inventory():
     """Get datacenter inventory."""
     inventory_file = DATA_DIR / "datacenter_inventory.json"
@@ -151,6 +268,7 @@ def get_inventory():
 
 
 @app.route('/api/data/metrics', methods=['GET'])
+@require_session
 def get_metrics():
     """Get customer metrics."""
     metrics_file = DATA_DIR / "metrics.json"
@@ -163,6 +281,7 @@ def get_metrics():
 
 
 @app.route('/api/auth/info', methods=['GET'])
+@require_session
 def get_auth_info():
     """Get authentication information (user and token details)."""
     try:

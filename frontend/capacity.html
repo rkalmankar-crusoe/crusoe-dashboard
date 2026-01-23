@@ -531,27 +531,49 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Overlay -->
+    <div id="loginOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 32, 53, 0.95); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; max-width: 400px;">
+            <h2 style="margin-bottom: 20px;">🌐 Crusoe Cloud Dashboard</h2>
+            <p style="color: #888; margin-bottom: 30px;">Please authenticate to access the dashboard</p>
+            <button onclick="attemptLogin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%;">
+                🔐 Login
+            </button>
+            <div id="loginError" style="color: #f44336; margin-top: 20px; display: none;"></div>
+            <div id="loginInfo" style="color: #888; margin-top: 20px; font-size: 0.85em;">
+                Authenticates using your cloud-admin token
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
         <header>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div style="flex: 1;"></div>
+                <div style="flex: 1; display: flex; gap: 10px;">
+                    <button onclick="refreshDashboard()" class="refresh-btn" title="Refresh data from cloud-admin">
+                        🔄 Refresh
+                    </button>
+                </div>
                 <div style="flex: 1; text-align: center;">
                     <h1>🌐 Crusoe Cloud</h1>
                 </div>
-                <div style="flex: 1; text-align: right;">
-                    <button onclick="refreshDashboard()" class="refresh-btn" title="Refresh data">
-                        🔄 Refresh
+                <div style="flex: 1; text-align: right; display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+                    <div id="authInfo" style="color: #888; font-size: 0.85em; display: flex; align-items: center; gap: 10px;">
+                        <span id="userEmail" style="color: #64B5F6;">👤 Loading...</span>
+                        <span id="tokenAge" style="color: #999;">🔐 Token: Loading...</span>
+                    </div>
+                    <button onclick="logout()" style="background: rgba(244, 67, 54, 0.2); color: #EF5350; border: 1px solid rgba(244, 67, 54, 0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;" title="Logout from dashboard">
+                        🚪 Logout
                     </button>
                 </div>
             </div>
             <div class="subtitle">Physical Datacenter Capacity Dashboard</div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                <div id="authInfo" style="color: #888; font-size: 0.85em;">
-                    <span id="userEmail" style="color: #64B5F6;">Loading...</span>
-                    <span id="tokenAge" style="margin-left: 15px; color: #999;">Token: Loading...</span>
-                </div>
                 <div id="lastUpdated" style="color: #888; font-size: 0.9em;">
                     Last updated: <span id="updateTime">Loading...</span>
+                </div>
+                <div style="color: #888; font-size: 0.85em;">
+                    <span id="filterSummary"></span>
                 </div>
             </div>
 
@@ -759,10 +781,96 @@
         // Chat conversation history for context
         let conversationHistory = [];
 
+        // Authentication functions
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    // Show main content
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    // Load data
+                    loadAuthInfo();
+                    loadInventory();
+                } else {
+                    // Show login overlay
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    document.getElementById('mainContent').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Auth status check failed:', error);
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        }
+
+        async function attemptLogin() {
+            const loginButton = event.target;
+            loginButton.disabled = true;
+            loginButton.textContent = '🔄 Authenticating...';
+            document.getElementById('loginError').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Login successful
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    loadAuthInfo();
+                    loadInventory();
+                } else {
+                    // Login failed
+                    document.getElementById('loginError').textContent = data.error || 'Authentication failed';
+                    document.getElementById('loginError').style.display = 'block';
+                    loginButton.disabled = false;
+                    loginButton.textContent = '🔐 Login';
+                }
+            } catch (error) {
+                console.error('Login failed:', error);
+                document.getElementById('loginError').textContent = 'Connection error. Please try again.';
+                document.getElementById('loginError').style.display = 'block';
+                loginButton.disabled = false;
+                loginButton.textContent = '🔐 Login';
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    // Clear local data
+                    inventoryData = null;
+                    conversationHistory = [];
+
+                    // Show login overlay
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    document.getElementById('mainContent').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
         // Load inventory data
         async function loadAuthInfo() {
             try {
-                const response = await fetch('/api/auth/info');
+                const response = await fetch('/api/auth/info', {
+                    credentials: 'include'
+                });
                 if (response.ok) {
                     const authData = await response.json();
 
@@ -795,9 +903,13 @@
                 // Try API endpoint first, fall back to static file
                 let response;
                 try {
-                    response = await fetch('/api/data/inventory');
+                    response = await fetch('/api/data/inventory', {
+                        credentials: 'include'
+                    });
                 } catch (e) {
-                    response = await fetch('../backend/data/datacenter_inventory.json');
+                    response = await fetch('../backend/data/datacenter_inventory.json', {
+                        credentials: 'include'
+                    });
                 }
 
                 if (!response.ok) throw new Error('Failed to fetch inventory');
@@ -1514,7 +1626,8 @@
             try {
                 // Trigger refresh
                 const response = await fetch('/api/refresh', {
-                    method: 'POST'
+                    method: 'POST',
+                    credentials: 'include'
                 });
 
                 if (!response.ok) {
@@ -1524,7 +1637,9 @@
                 // Poll for progress
                 const pollInterval = setInterval(async () => {
                     try {
-                        const statusResponse = await fetch('/api/refresh/status');
+                        const statusResponse = await fetch('/api/refresh/status', {
+                            credentials: 'include'
+                        });
                         const status = await statusResponse.json();
 
                         progressBar.style.width = status.progress + '%';
@@ -1945,10 +2060,9 @@
             return context;
         }
 
-        // Load inventory and auth info on page load
+        // Check authentication status on page load
         window.addEventListener('load', () => {
-            loadAuthInfo();
-            loadInventory();
+            checkAuthStatus();
         });
     </script>
 </body>
